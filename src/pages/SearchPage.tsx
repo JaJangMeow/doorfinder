@@ -6,40 +6,22 @@ import SearchBar from "@/components/SearchBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
 import { Search, BookOpen, School } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { searchPropertiesByCollege } from "@/services/propertyService";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<PropertyData[]>([]);
-  const [searchResults, setSearchResults] = useState<PropertyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch properties on component mount
+  // Initial load of properties
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
-        
-        const formattedProperties = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          address: item.address,
-          price: item.price,
-          bedrooms: item.bedrooms,
-          availableFrom: item.available_from,
-          imageUrl: item.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80'
-        }));
-        
-        setProperties(formattedProperties);
-        // Initially no search, so all properties are shown
-        setSearchResults(formattedProperties);
+        // Start with all properties
+        const data = await searchPropertiesByCollege("");
+        setProperties(data);
       } catch (error) {
         console.error('Error fetching properties:', error);
         toast({
@@ -55,27 +37,23 @@ const SearchPage: React.FC = () => {
     fetchProperties();
   }, [toast]);
 
-  const handleSearch = (term: string) => {
+  const handleSearch = async (term: string) => {
     setSearchTerm(term);
     
-    if (!term.trim()) {
-      // If search is empty, show all properties
-      setSearchResults(properties);
-      return;
+    try {
+      setIsLoading(true);
+      const results = await searchPropertiesByCollege(term);
+      setProperties(results);
+    } catch (error) {
+      console.error('Error searching properties:', error);
+      toast({
+        title: "Error",
+        description: "Failed to search properties. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Filter properties based on search term - expanded to check description as well for college name
-    const filtered = properties.filter(
-      property => {
-        const searchLower = term.toLowerCase();
-        return property.title.toLowerCase().includes(searchLower) ||
-          property.address.toLowerCase().includes(searchLower) ||
-          String(property.bedrooms).includes(term) ||
-          String(property.price).includes(term)
-      }
-    );
-    
-    setSearchResults(filtered);
   };
 
   return (
@@ -91,7 +69,7 @@ const SearchPage: React.FC = () => {
           <div className="mb-8">
             <SearchBar 
               onSearch={handleSearch}
-              placeholder="Search by college, location or property type..."
+              placeholder="Search by college name (e.g., KJC, Kristu Jayanti College)..."
               className="w-full"
             />
           </div>
@@ -105,9 +83,9 @@ const SearchPage: React.FC = () => {
                 />
               ))}
             </div>
-          ) : searchResults.length > 0 ? (
+          ) : properties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {searchResults.map((property) => (
+              {properties.map((property) => (
                 <PropertyCard 
                   key={property.id} 
                   property={property}
