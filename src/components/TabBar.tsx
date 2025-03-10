@@ -1,52 +1,59 @@
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, Search, Heart, User } from "lucide-react";
+import { Home, Search, BookmarkCheck, User, Plus } from "lucide-react";
 
 const TabBar: React.FC = () => {
+  const navigate = useNavigate();
   const location = useLocation();
-
+  
   const tabs = [
     {
       name: "Home",
       path: "/",
-      icon: Home,
+      icon: <Home size={20} />,
     },
     {
       name: "Search",
       path: "/search",
-      icon: Search,
+      icon: <Search size={20} />,
+    },
+    {
+      name: "Post",
+      path: "/post",
+      icon: <Plus size={20} />,
     },
     {
       name: "Saved",
       path: "/saved",
-      icon: Heart,
+      icon: <BookmarkCheck size={20} />,
     },
     {
       name: "Profile",
       path: "/profile",
-      icon: User,
+      icon: <User size={20} />,
     },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-40">
-      <div className="flex justify-around items-center h-16">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/80 backdrop-blur-lg z-50">
+      <div className="grid grid-cols-5 h-16">
         {tabs.map((tab) => (
-          <Link
+          <button
             key={tab.name}
-            to={tab.path}
             className={cn(
-              "flex flex-col items-center justify-center py-2 px-4 w-full transition-colors",
+              "flex flex-col items-center justify-center text-xs transition-colors",
+              "cursor-pointer hover:text-primary",
               location.pathname === tab.path
                 ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground"
             )}
+            onClick={() => navigate(tab.path)}
           >
-            <tab.icon className="h-5 w-5 mb-1" />
-            <span className="text-xs">{tab.name}</span>
-          </Link>
+            {tab.icon}
+            <span className="mt-1">{tab.name}</span>
+          </button>
         ))}
       </div>
     </div>

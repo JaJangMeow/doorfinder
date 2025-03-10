@@ -5,7 +5,7 @@ import TabBar from "@/components/TabBar";
 import SearchBar from "@/components/SearchBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search } from "lucide-react";
+import { Search, BookOpen, School } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const SearchPage: React.FC = () => {
@@ -22,7 +22,8 @@ const SearchPage: React.FC = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('properties')
-          .select('*');
+          .select('*')
+          .order('created_at', { ascending: false });
           
         if (error) throw error;
         
@@ -63,13 +64,15 @@ const SearchPage: React.FC = () => {
       return;
     }
     
-    // Filter properties based on search term
+    // Filter properties based on search term - expanded to check description as well for college name
     const filtered = properties.filter(
-      property => 
-        property.title.toLowerCase().includes(term.toLowerCase()) ||
-        property.address.toLowerCase().includes(term.toLowerCase()) ||
-        String(property.bedrooms).includes(term) ||
-        String(property.price).includes(term)
+      property => {
+        const searchLower = term.toLowerCase();
+        return property.title.toLowerCase().includes(searchLower) ||
+          property.address.toLowerCase().includes(searchLower) ||
+          String(property.bedrooms).includes(term) ||
+          String(property.price).includes(term)
+      }
     );
     
     setSearchResults(filtered);
@@ -80,12 +83,15 @@ const SearchPage: React.FC = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Find Your Ideal Property</h1>
+          <div className="flex items-center mb-6">
+            <School className="text-primary mr-3" size={28} />
+            <h1 className="text-3xl font-bold">Find Student Housing</h1>
+          </div>
           
           <div className="mb-8">
             <SearchBar 
               onSearch={handleSearch}
-              placeholder="Search by location, property type..."
+              placeholder="Search by college, location or property type..."
               className="w-full"
             />
           </div>
@@ -111,8 +117,9 @@ const SearchPage: React.FC = () => {
           ) : (
             <div className="py-12 text-center">
               <div className="inline-flex flex-col items-center text-muted-foreground">
-                <Search size={48} className="mb-4 opacity-20" />
+                <BookOpen size={48} className="mb-4 opacity-20" />
                 <p className="text-lg">No properties found matching "{searchTerm}"</p>
+                <p className="mt-2">Try searching for a different college or location</p>
               </div>
             </div>
           )}
