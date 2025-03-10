@@ -2,6 +2,32 @@ import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
 
+interface PropertyDataWithDistance extends PropertyData {
+  distance?: number;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+declare module "@/components/PropertyDetail" {
+  interface PropertyDetailData {
+    id: string;
+    title: string;
+    address: string;
+    price: number;
+    bedrooms: number;
+    bathrooms: number;
+    squareFeet: number;
+    availableFrom: string;
+    description: string;
+    images: string[];
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    latitude: number | null;
+    longitude: number | null;
+  }
+}
+
 export interface PropertyFilter {
   minPrice?: number;
   maxPrice?: number;
@@ -13,10 +39,6 @@ export interface PropertyFilter {
     lat: number;
     lng: number;
   };
-}
-
-interface PropertyDataWithDistance extends PropertyData {
-  distance?: number;
 }
 
 export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest' | 'nearest';

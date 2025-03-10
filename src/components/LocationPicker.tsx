@@ -33,12 +33,12 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Initialize Mapbox
-    mapboxgl.accessToken = 'AIzaSyCqG_rXoFfwIRg8eoCV_joDHYk8ZrkpOsg';
+    // Initialize Mapbox with your token
+    mapboxgl.accessToken = 'pk.eyJ1IjoiMjRtc2NzMTAiLCJhIjoiY204MnhzajRxMWt2aTJycTh2ZHc0aWZldCJ9.DnpQkiPBocF3mh-5VM77KA';
     
     const initializedMap = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_key',
+      style: 'mapbox://styles/mapbox/streets-v11', // Updated to use Mapbox's default style
       center: [coordinates.lng, coordinates.lat],
       zoom: zoom
     });
