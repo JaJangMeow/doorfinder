@@ -64,6 +64,27 @@ const RegisterPage: React.FC = () => {
     
     try {
       // Check if email already exists first
+      const { data: emailCheckData, error: emailCheckError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (emailCheckError && !emailCheckError.message.includes('not found')) {
+        throw emailCheckError;
+      }
+      
+      if (emailCheckData) {
+        toast({
+          title: "Email already registered",
+          description: "This email is already registered. Please use a different email or login instead.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Sign up with Supabase
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -80,6 +101,14 @@ const RegisterPage: React.FC = () => {
       if (!user) {
         throw new Error("Failed to create account. Please try again.");
       }
+
+      // Sign in immediately after successful sign up
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) throw signInError;
 
       // Success toast
       toast({

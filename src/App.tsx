@@ -35,6 +35,7 @@ const App = () => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
+      console.log("Auth state on init:", !!data.session);
     };
     
     checkSession();
@@ -42,6 +43,7 @@ const App = () => {
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, !!session);
         setIsAuthenticated(!!session);
       }
     );

@@ -4,15 +4,60 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Menu, X, User, LogIn, LogOut } from "lucide-react";
 import Button from "./Button";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Simulated auth state - in a real app this would use proper auth state management
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Detect user authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+      
+      if (data.session) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .maybeSingle();
+          
+        setUserProfile(profileData);
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Navbar auth event:", event);
+        setIsAuthenticated(!!session);
+        
+        if (session) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          setUserProfile(profileData);
+        } else {
+          setUserProfile(null);
+        }
+      }
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Detect scroll position to change navbar appearance
   useEffect(() => {
@@ -29,10 +74,22 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    // Simulated logout - in a real app this would use proper auth logic
-    setIsAuthenticated(false);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -118,7 +175,7 @@ const Navbar: React.FC = () => {
                   size="sm"
                   iconLeft={<User size={16} />}
                 >
-                  Profile
+                  {userProfile?.full_name || 'Profile'}
                 </Button>
               </Link>
               <Button 
