@@ -7,6 +7,7 @@ import { getPropertyById } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
 import TabBar from "@/components/TabBar";
 import Navbar from "@/components/Navbar";
+import { GOOGLE_MAPS_API_KEY } from "@/lib/supabase";
 
 const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +18,23 @@ const PropertyDetailPage: React.FC = () => {
     queryFn: () => id ? getPropertyById(id) : null,
     enabled: !!id,
   });
+
+  // Load Google Maps script
+  React.useEffect(() => {
+    // Check if Google Maps script is already loaded
+    if (!window.google && property?.latitude && property?.longitude) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+      
+      return () => {
+        // Clean up the script when the component unmounts
+        document.head.removeChild(script);
+      };
+    }
+  }, [property]);
 
   // Show error toast if needed
   React.useEffect(() => {

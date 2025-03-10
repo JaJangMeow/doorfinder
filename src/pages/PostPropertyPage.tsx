@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import Navbar from "@/components/Navbar";
@@ -42,7 +42,12 @@ const PostPropertyPage: React.FC = () => {
   };
 
   const handleLocationSelect = (coords: Coordinates) => {
+    console.log("Selected coordinates:", coords);
     setCoordinates(coords);
+    toast({
+      title: "Location updated",
+      description: `Location set to: Lat ${coords.lat.toFixed(6)}, Lng ${coords.lng.toFixed(6)}`,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +63,8 @@ const PostPropertyPage: React.FC = () => {
       if (isNaN(numericPrice) || isNaN(numericBedrooms)) {
         throw new Error("Price and bedrooms must be valid numbers");
       }
+
+      console.log("Submitting property with coordinates:", coordinates);
 
       // Create the property record with location coordinates
       const { data, error } = await supabase
@@ -214,11 +221,20 @@ const PostPropertyPage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <Label className="block mb-2">Property Location</Label>
+                  <Label className="block mb-2">Property Location (Drag the marker to set exact location)</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Click and drag the marker to the exact location of your property. This helps students find your property more easily.
+                  </p>
                   <LocationPicker 
                     onLocationSelect={handleLocationSelect}
                     defaultLocation={coordinates}
+                    height="400px"
+                    zoom={15}
                   />
+                  <div className="mt-2 flex items-center text-sm text-muted-foreground">
+                    <MapPin size={16} className="mr-1" />
+                    <span>Selected coordinates: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}</span>
+                  </div>
                 </div>
               </div>
             </div>

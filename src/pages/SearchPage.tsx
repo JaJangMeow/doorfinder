@@ -6,8 +6,17 @@ import SearchBar from "@/components/SearchBar";
 import FilterSortPanel from "@/components/FilterSortPanel";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BookOpen, School, Filter } from "lucide-react";
+import { Search, BookOpen, School, Filter, MapPin } from "lucide-react";
 import { searchPropertiesByCollege, PropertyFilter, SortOption } from "@/services/propertyService";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,7 +24,17 @@ const SearchPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<PropertyFilter>({});
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { toast } = useToast();
+
+  // Detailed filter states
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [minBedrooms, setMinBedrooms] = useState<number | undefined>(undefined);
+  const [maxBedrooms, setMaxBedrooms] = useState<number | undefined>(undefined);
+  const [availableDate, setAvailableDate] = useState<Date | undefined>(undefined);
+  const [maxDistance, setMaxDistance] = useState<number | undefined>(undefined);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | undefined>(undefined);
 
   // Initial load of properties
   useEffect(() => {
@@ -40,6 +59,38 @@ const SearchPage: React.FC = () => {
     fetchProperties();
   }, [toast, filters, sortOption]);
 
+  // Get user location for distance filtering
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          toast({
+            title: "Location detected",
+            description: "Your location has been set for distance filtering.",
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          toast({
+            title: "Location error",
+            description: "Could not detect your location. Distance filtering will not be accurate.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser does not support geolocation. Distance filtering will not be available.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
     
@@ -59,13 +110,39 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  const handleApplyFilters = (newFilters: PropertyFilter) => {
+  const handleApplyFilters = () => {
+    const newFilters: PropertyFilter = {};
+    
+    if (minPrice) newFilters.minPrice = minPrice;
+    if (maxPrice) newFilters.maxPrice = maxPrice;
+    if (minBedrooms) newFilters.minBedrooms = minBedrooms;
+    if (maxBedrooms) newFilters.maxBedrooms = maxBedrooms;
+    if (availableDate) newFilters.availableFrom = format(availableDate, 'yyyy-MM-dd');
+    if (maxDistance && userLocation) {
+      newFilters.maxDistance = maxDistance;
+      newFilters.nearLocation = userLocation;
+    }
+    
     setFilters(newFilters);
+    setIsFilterOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setMinBedrooms(undefined);
+    setMaxBedrooms(undefined);
+    setAvailableDate(undefined);
+    setMaxDistance(undefined);
+    setFilters({});
+    setIsFilterOpen(false);
   };
 
   const handleSort = (option: SortOption) => {
     setSortOption(option);
   };
+
+  const activeFiltersCount = Object.keys(filters).length;
 
   return (
     <div className="min-h-screen pb-16">
@@ -85,10 +162,157 @@ const SearchPage: React.FC = () => {
             />
           </div>
           
-          <FilterSortPanel 
-            onApplyFilters={handleApplyFilters}
-            onSort={handleSort}
-          />
+          {/* Advanced filtering and sorting UI */}
+          <div className="mb-8 flex flex-wrap gap-3 items-center">
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter size={16} />
+                  Filters
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-1 rounded-full bg-primary text-white text-xs w-5 h-5 flex items-center justify-center">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 sm:w-96 p-4">
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">Filter Properties</h3>
+                  
+                  <div className="space-y-2">
+                    <Label>Price Range (₹)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        value={minPrice || ''}
+                        onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                      <span>to</span>
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        value={maxPrice || ''}
+                        onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Bedrooms</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        value={minBedrooms || ''}
+                        onChange={(e) => setMinBedrooms(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                      <span>to</span>
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        value={maxBedrooms || ''}
+                        onChange={(e) => setMaxBedrooms(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Available From</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !availableDate && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {availableDate ? format(availableDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={availableDate}
+                          onSelect={setAvailableDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label>Distance (km)</Label>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={getUserLocation}
+                        className="h-8 px-2"
+                      >
+                        <MapPin size={16} className="mr-1" />
+                        Set My Location
+                      </Button>
+                    </div>
+                    {maxDistance && (
+                      <div className="pt-2 pb-1 px-1">
+                        <p className="text-center text-sm mb-2">{maxDistance} km</p>
+                        <Slider
+                          value={[maxDistance]}
+                          min={1}
+                          max={50}
+                          step={1}
+                          onValueChange={(vals) => setMaxDistance(vals[0])}
+                          disabled={!userLocation}
+                        />
+                      </div>
+                    )}
+                    {!maxDistance && (
+                      <div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setMaxDistance(10)}
+                          className="w-full"
+                          disabled={!userLocation}
+                        >
+                          Enable distance filter
+                        </Button>
+                      </div>
+                    )}
+                    {!userLocation && (
+                      <p className="text-xs text-muted-foreground">Set your location to enable distance filtering</p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between pt-2">
+                    <Button variant="outline" onClick={handleResetFilters}>
+                      Reset
+                    </Button>
+                    <Button onClick={handleApplyFilters}>
+                      Apply Filters
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Select value={sortOption} onValueChange={(val) => handleSort(val as SortOption)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                <SelectItem value="bedrooms_desc">Most Bedrooms</SelectItem>
+                {userLocation && <SelectItem value="nearest">Nearest First</SelectItem>}
+              </SelectContent>
+            </Select>
+          </div>
           
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
