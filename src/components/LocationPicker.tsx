@@ -2,10 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin, Search } from 'lucide-react';
+import { MapPin, Search, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { GOOGLE_MAPS_API_KEY } from '@/lib/supabase';
 
 interface Coordinates {
   lat: number;
@@ -201,6 +202,11 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     }
   };
 
+  const openInGoogleMaps = () => {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
+    window.open(googleMapsUrl, '_blank');
+  };
+
   return (
     <div className={`${className || ''}`}>
       <div className="glass mb-2">
@@ -232,6 +238,15 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         </Button>
         
         <div ref={mapContainer} className="w-full rounded-lg" style={{ height }} />
+        
+        <Button
+          variant="outline"
+          onClick={openInGoogleMaps}
+          className="w-full mt-2 text-blue-600"
+        >
+          <ExternalLink size={16} className="mr-2" />
+          Open in Google Maps
+        </Button>
       </div>
       <div className="mt-2 text-sm flex items-center text-muted-foreground">
         <MapPin size={14} className="mr-1" />

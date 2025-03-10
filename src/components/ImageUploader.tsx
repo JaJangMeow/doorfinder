@@ -70,10 +70,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `property_images/${fileName}`;
 
+        console.log('Attempting to upload to path:', filePath);
+
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
           .from('properties')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
 
         if (error) {
           console.error('Error uploading image:', error);
@@ -85,11 +90,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           continue;
         }
 
+        console.log('Upload successful, data:', data);
+
         // Get the public URL
         const { data: { publicUrl } } = supabase.storage
           .from('properties')
           .getPublicUrl(filePath);
 
+        console.log('Public URL:', publicUrl);
         uploadedUrls.push(publicUrl);
         
         // Update progress
