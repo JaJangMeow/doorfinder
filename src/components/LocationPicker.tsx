@@ -2,8 +2,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin } from 'lucide-react';
+import { MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Coordinates {
   lat: number;
@@ -30,6 +32,9 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [coordinates, setCoordinates] = useState<Coordinates>(defaultLocation);
   const [isLocating, setIsLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const { toast } = useToast();
 
   // Initialize map
   useEffect(() => {
@@ -127,14 +132,95 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         (error) => {
           console.error('Error getting location:', error);
           setIsLocating(false);
+          toast({
+            title: "Location error",
+            description: "Could not access your location. Please search or manually place the marker.",
+            variant: "destructive",
+          });
         }
       );
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    
+    try {
+      // Use Mapbox Geocoding API to search for places
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxgl.accessToken}&proximity=ip&types=address,place,locality,neighborhood&country=in`);
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const firstResult = data.features[0];
+        const [lng, lat] = firstResult.center;
+        
+        const newCoordinates = {
+          lat,
+          lng
+        };
+        
+        if (map.current && marker.current) {
+          marker.current.setLngLat([lng, lat]);
+          map.current.flyTo({
+            center: [lng, lat],
+            zoom: 15,
+            essential: true
+          });
+        }
+        
+        setCoordinates(newCoordinates);
+        onLocationSelect(newCoordinates);
+        
+        toast({
+          title: "Location found",
+          description: `Found: ${firstResult.place_name}. You can adjust the pin if needed.`,
+        });
+      } else {
+        toast({
+          title: "No results found",
+          description: "Try a different search term or place the marker manually",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search failed",
+        description: "There was an error searching for this location",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
     }
   };
 
   return (
     <div className={`${className || ''}`}>
       <div className="glass mb-2">
+        <form onSubmit={handleSearch} className="flex gap-2 mb-2">
+          <Input
+            placeholder="Search for address, landmark, or area"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button 
+            type="submit" 
+            variant="secondary"
+            disabled={isSearching}
+          >
+            <Search size={16} className="mr-2" />
+            {isSearching ? 'Searching...' : 'Search'}
+          </Button>
+        </form>
+        
         <Button 
           variant="outline" 
           onClick={getCurrentLocation}
@@ -144,6 +230,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
           <MapPin size={16} className="mr-2" />
           {isLocating ? 'Getting location...' : 'Use My Current Location'}
         </Button>
+        
         <div ref={mapContainer} className="w-full rounded-lg" style={{ height }} />
       </div>
       <div className="mt-2 text-sm flex items-center text-muted-foreground">

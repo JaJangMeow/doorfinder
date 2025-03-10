@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +18,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
   const [images, setImages] = useState<string[]>(initialImages);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,8 +37,34 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
 
     setIsUploading(true);
-    const uploadPromises = files.map(async (file) => {
-      try {
+    setUploadProgress(0);
+    
+    try {
+      // Process files one by one to track progress
+      const uploadedUrls = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds the 5MB size limit`,
+            variant: "destructive",
+          });
+          continue;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an image file`,
+            variant: "destructive",
+          });
+          continue;
+        }
+        
         // Create a unique filename
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
@@ -49,7 +76,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           .upload(filePath, file);
 
         if (error) {
-          throw error;
+          console.error('Error uploading image:', error);
+          toast({
+            title: "Upload failed",
+            description: `Failed to upload ${file.name}. ${error.message}`,
+            variant: "destructive",
+          });
+          continue;
         }
 
         // Get the public URL
@@ -57,29 +90,33 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           .from('properties')
           .getPublicUrl(filePath);
 
-        return publicUrl;
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast({
-          title: "Upload failed",
-          description: "Failed to upload one or more images. Please try again.",
-          variant: "destructive",
-        });
-        return null;
+        uploadedUrls.push(publicUrl);
+        
+        // Update progress
+        setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
-    });
-
-    const uploadedUrls = (await Promise.all(uploadPromises)).filter(url => url !== null) as string[];
-    
-    const newImages = [...images, ...uploadedUrls];
-    setImages(newImages);
-    onImagesChange(newImages);
-    setIsUploading(false);
-    
-    toast({
-      title: "Upload successful",
-      description: `Successfully uploaded ${uploadedUrls.length} image(s)`,
-    });
+      
+      if (uploadedUrls.length > 0) {
+        const newImages = [...images, ...uploadedUrls];
+        setImages(newImages);
+        onImagesChange(newImages);
+        
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${uploadedUrls.length} image(s)`,
+        });
+      }
+    } catch (error) {
+      console.error('Error in upload process:', error);
+      toast({
+        title: "Upload error",
+        description: "An unexpected error occurred during the upload process",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const removeImage = (indexToRemove: number) => {
@@ -118,10 +155,21 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               className="hidden" 
               disabled={isUploading}
             />
-            <Upload size={24} className="text-muted-foreground mb-2" />
-            <span className="text-sm text-muted-foreground">
-              {isUploading ? "Uploading..." : "Add Image"}
-            </span>
+            {isUploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 size={24} className="animate-spin text-primary mb-2" />
+                <span className="text-sm text-muted-foreground">
+                  Uploading... {uploadProgress}%
+                </span>
+              </div>
+            ) : (
+              <>
+                <Upload size={24} className="text-muted-foreground mb-2" />
+                <span className="text-sm text-muted-foreground">
+                  Click to add images
+                </span>
+              </>
+            )}
           </label>
         )}
       </div>
@@ -133,6 +181,15 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           {images.length === 0 && " At least one image is required."}
         </span>
       </div>
+      {images.length === 0 && (
+        <div className="text-xs text-amber-500">
+          • Upload at least one photo to showcase your property
+          <br />
+          • Photos should be clear and well-lit
+          <br />
+          • Include photos of all rooms, kitchen, bathroom and exterior
+        </div>
+      )}
     </div>
   );
 };
