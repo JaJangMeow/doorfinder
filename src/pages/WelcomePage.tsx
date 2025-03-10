@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Home, User } from "lucide-react";
+import { ChevronRight, User } from "lucide-react";
 import Button from "@/components/Button";
 import { supabase } from "@/lib/supabase";
 
@@ -61,18 +61,6 @@ const WelcomePage: React.FC = () => {
               style={{ animationDelay: '200ms' }}
             >
               Create New Account
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="md"
-              fullWidth
-              iconRight={<Home size={18} />}
-              onClick={() => navigate('/browse')}
-              className="mt-4 animate-fade-in"
-              style={{ animationDelay: '300ms' }}
-            >
-              Browse as Guest
             </Button>
           </div>
         </div>

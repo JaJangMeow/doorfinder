@@ -16,7 +16,6 @@ import PostPropertyPage from "./pages/PostPropertyPage";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import BrowsePage from "./pages/BrowsePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +66,19 @@ const App = () => {
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
 
+  // Semi-protected route component - redirect to auth page if not authenticated
+  const SemiProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (isAuthenticated === null) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+    
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -78,14 +90,33 @@ const App = () => {
             <Route path="/" element={<WelcomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/browse" element={<BrowsePage />} />
             
-            {/* Semi-Protected Routes - accessible but functionality limited for guests */}
-            <Route path="/home" element={<Index />} />
-            <Route path="/property/:id" element={<PropertyDetail />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/saved" element={<SavedPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            {/* Protected Routes - redirect to login if not authenticated */}
+            <Route path="/home" element={
+              <SemiProtectedRoute>
+                <Index />
+              </SemiProtectedRoute>
+            } />
+            <Route path="/property/:id" element={
+              <SemiProtectedRoute>
+                <PropertyDetail />
+              </SemiProtectedRoute>
+            } />
+            <Route path="/search" element={
+              <SemiProtectedRoute>
+                <SearchPage />
+              </SemiProtectedRoute>
+            } />
+            <Route path="/saved" element={
+              <SemiProtectedRoute>
+                <SavedPage />
+              </SemiProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <SemiProtectedRoute>
+                <ProfilePage />
+              </SemiProtectedRoute>
+            } />
             
             {/* Fully Protected Routes - only for authenticated users */}
             <Route path="/post" element={
@@ -93,6 +124,9 @@ const App = () => {
                 <PostPropertyPage />
               </ProtectedRoute>
             } />
+            
+            {/* Redirects */}
+            <Route path="/browse" element={<Navigate to="/search" replace />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
