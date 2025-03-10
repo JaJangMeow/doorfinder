@@ -1,80 +1,41 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import Button from "@/components/Button";
+import TabBar from "@/components/TabBar";
 import { MapPin, Search, ChevronDown } from "lucide-react";
-
-// Mock data - in a real app this would come from an API
-const mockProperties: PropertyData[] = [
-  {
-    id: "1",
-    title: "Modern Downtown Apartment",
-    address: "123 Main St, New York, NY 10001",
-    price: 2500,
-    bedrooms: 2,
-    availableFrom: "2023-08-01",
-    imageUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  },
-  {
-    id: "2",
-    title: "Spacious Family Home with Garden",
-    address: "456 Oak Ave, San Francisco, CA 94117",
-    price: 4200,
-    bedrooms: 4,
-    availableFrom: "2023-09-01",
-    imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  },
-  {
-    id: "3",
-    title: "Cozy Studio in Historic Building",
-    address: "789 Maple St, Chicago, IL 60611",
-    price: 1200,
-    bedrooms: 1,
-    availableFrom: "2023-07-15",
-    imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  },
-  {
-    id: "4",
-    title: "Luxury Penthouse with City Views",
-    address: "101 Tower Dr, Miami, FL 33101",
-    price: 6500,
-    bedrooms: 3,
-    availableFrom: "2023-10-01",
-    imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  },
-  {
-    id: "5",
-    title: "Charming Cottage Near Lake",
-    address: "222 Lakeside Ln, Seattle, WA 98101",
-    price: 2800,
-    bedrooms: 2,
-    availableFrom: "2023-08-15",
-    imageUrl: "https://images.unsplash.com/photo-1575517111839-3a3843ee7f5d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  },
-  {
-    id: "6",
-    title: "Industrial Loft in Art District",
-    address: "333 Gallery Ave, Portland, OR 97201",
-    price: 2100,
-    bedrooms: 1,
-    availableFrom: "2023-07-15",
-    imageUrl: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-  }
-];
+import { getProperties } from "@/services/propertyService";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+  
+  // Fetch properties using react-query
+  const { data: properties, isLoading, error } = useQuery({
+    queryKey: ['properties'],
+    queryFn: getProperties,
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load properties. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    // In a real app, this would trigger an API call
     console.log("Searching for:", term);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16">
       <Navbar />
       
       {/* Hero Section */}
@@ -157,16 +118,31 @@ const Index: React.FC = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mockProperties.map((property, index) => (
-              <PropertyCard 
-                key={property.id} 
-                property={property} 
-                className="animate-scale-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((index) => (
+                <div 
+                  key={index}
+                  className="h-72 bg-muted animate-pulse rounded-2xl"
+                />
+              ))}
+            </div>
+          ) : properties && properties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {properties.map((property, index) => (
+                <PropertyCard 
+                  key={property.id} 
+                  property={property} 
+                  className="animate-scale-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">No properties found.</p>
+            </div>
+          )}
           
           <div className="mt-16 text-center">
             <Button size="lg">
@@ -227,6 +203,9 @@ const Index: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* TabBar */}
+      <TabBar />
     </div>
   );
 };
