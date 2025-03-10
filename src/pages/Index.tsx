@@ -16,10 +16,10 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Fetch properties using react-query
+  // Fix the useQuery call to match the function signature
   const { data: properties, isLoading, error } = useQuery({
     queryKey: ['properties'],
-    queryFn: getProperties,
+    queryFn: () => getProperties(), // Wrap getProperties in an anonymous function with no parameters
   });
 
   useEffect(() => {
