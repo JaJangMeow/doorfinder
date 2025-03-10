@@ -63,27 +63,8 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Check if email already exists
-      const { data: existingUsers, error: lookupError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-      
-      if (lookupError) throw lookupError;
-      
-      if (existingUsers) {
-        toast({
-          title: "Email already exists",
-          description: "This email is already registered. Please use a different email or login instead.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Register with Supabase (we'll skip email confirmation by using signUp + auto-sign in)
-      const { data, error } = await supabase.auth.signUp({
+      // Check if email already exists first
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -94,16 +75,12 @@ const RegisterPage: React.FC = () => {
         },
       });
       
-      if (error) throw error;
+      if (signUpError) throw signUpError;
+      
+      if (!user) {
+        throw new Error("Failed to create account. Please try again.");
+      }
 
-      // Immediately sign in to avoid confirmation email
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (signInError) throw signInError;
-      
       // Success toast
       toast({
         title: "Account created!",
@@ -115,9 +92,15 @@ const RegisterPage: React.FC = () => {
     } catch (error: any) {
       console.error("Registration error:", error);
       
+      let errorMessage = "An error occurred during registration.";
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "This email is already registered. Please use a different email or login instead.";
+      }
+      
       toast({
         title: "Registration failed",
-        description: error.message || "An error occurred during registration.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

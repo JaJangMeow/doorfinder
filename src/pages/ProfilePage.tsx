@@ -20,23 +20,34 @@ const ProfilePage: React.FC = () => {
         const { data: session } = await supabase.auth.getSession();
         
         if (!session.session) {
+          setUserProfile({ isLoggedIn: false });
           setIsLoading(false);
           return;
         }
         
         const { user } = session.session;
         
-        // Fetch user metadata
+        // Fetch profile data from the profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profileError) throw profileError;
+        
+        // Combine auth user data with profile data
         const userData = {
           id: user.id,
           email: user.email,
-          name: user.user_metadata?.full_name || 'User',
+          name: profileData?.full_name || user.user_metadata?.full_name || 'User',
           isLoggedIn: true
         };
         
         setUserProfile(userData);
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        setUserProfile({ isLoggedIn: false });
       } finally {
         setIsLoading(false);
       }

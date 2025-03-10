@@ -51,18 +51,16 @@ const App = () => {
     };
   }, []);
   
-  // Protected route component
+  // Protected route component - strictly for authenticated users
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    // If auth status is still loading, return nothing to prevent flicker
-    if (isAuthenticated === null) return null;
-    
-    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-  };
-
-  // Restricted to authenticated users only
-  const AuthOnlyRoute = ({ children }: { children: React.ReactNode }) => {
-    // If auth status is still loading, return nothing to prevent flicker
-    if (isAuthenticated === null) return null;
+    // If auth status is still loading, show loading indicator
+    if (isAuthenticated === null) {
+      return (
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+        </div>
+      );
+    }
     
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
@@ -89,9 +87,9 @@ const App = () => {
             
             {/* Fully Protected Routes - only for authenticated users */}
             <Route path="/post" element={
-              <AuthOnlyRoute>
+              <ProtectedRoute>
                 <PostPropertyPage />
-              </AuthOnlyRoute>
+              </ProtectedRoute>
             } />
             
             {/* Catch-all route */}
