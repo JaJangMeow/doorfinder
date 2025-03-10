@@ -1,12 +1,24 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Home, User } from "lucide-react";
 import Button from "@/components/Button";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/browse');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,7 +29,7 @@ const WelcomePage: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           {/* Logo and Branding */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 animate-fade-in">
             <h1 className="flex items-center justify-center text-3xl font-bold text-foreground mb-2">
               <span className="text-primary font-bold">Door</span>
               <span>Finder</span>
@@ -25,29 +37,16 @@ const WelcomePage: React.FC = () => {
             <p className="text-muted-foreground">Find your perfect student housing</p>
           </div>
           
-          {/* Welcome Image */}
-          <div className="relative rounded-xl overflow-hidden mb-8 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-            <img 
-              src="/lovable-uploads/83895367-873f-49ab-ab0f-09cf6a9ea424.png" 
-              alt="Student housing" 
-              className="w-full aspect-[16/9] object-cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-              <h2 className="text-white text-xl font-semibold">Connect with fellow students</h2>
-              <p className="text-white/80 text-sm">Find affordable housing near your campus</p>
-            </div>
-          </div>
-          
           {/* Auth Buttons */}
-          <div className="space-y-4">
+          <div className="space-y-4 mt-8">
             <Button 
               variant="primary" 
               size="lg"
               fullWidth
               iconRight={<ChevronRight size={18} />}
               onClick={() => navigate('/login')}
-              className="h-14"
+              className="h-14 animate-fade-in"
+              style={{ animationDelay: '100ms' }}
             >
               Login to Your Account
             </Button>
@@ -58,7 +57,8 @@ const WelcomePage: React.FC = () => {
               fullWidth
               iconRight={<User size={18} />}
               onClick={() => navigate('/register')}
-              className="h-14"
+              className="h-14 animate-fade-in"
+              style={{ animationDelay: '200ms' }}
             >
               Create New Account
             </Button>
@@ -69,7 +69,8 @@ const WelcomePage: React.FC = () => {
               fullWidth
               iconRight={<Home size={18} />}
               onClick={() => navigate('/browse')}
-              className="mt-4"
+              className="mt-4 animate-fade-in"
+              style={{ animationDelay: '300ms' }}
             >
               Browse as Guest
             </Button>
@@ -78,7 +79,7 @@ const WelcomePage: React.FC = () => {
       </div>
       
       {/* Footer */}
-      <div className="py-4 text-center text-sm text-muted-foreground">
+      <div className="py-4 text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '400ms' }}>
         <p>© {new Date().getFullYear()} DoorFinder. All rights reserved.</p>
       </div>
     </div>

@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, ArrowLeft, LogIn } from "lucide-react";
 import Button from "@/components/Button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +15,18 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/browse');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +42,14 @@ const LoginPage: React.FC = () => {
     
     setIsLoading(true);
     
-    // Simulate login for now
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Use Supabase auth for login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
       
       // Success toast
       toast({
@@ -40,8 +58,18 @@ const LoginPage: React.FC = () => {
       });
       
       // Redirect to home
-      navigate('/');
-    }, 1500);
+      navigate('/browse');
+    } catch (error: any) {
+      console.error("Login error:", error);
+      
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
