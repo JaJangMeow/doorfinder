@@ -84,7 +84,7 @@ const RegisterPage: React.FC = () => {
         return;
       }
 
-      // Sign up with Supabase
+      // Register user with auto-confirmation enabled
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -100,6 +100,15 @@ const RegisterPage: React.FC = () => {
       
       if (!user) {
         throw new Error("Failed to create account. Please try again.");
+      }
+
+      // Auto-confirm the user's email (Supabase Admin API)
+      const { error: confirmError } = await supabase.functions.invoke('auto-confirm-user', {
+        body: { user_id: user.id }
+      });
+      
+      if (confirmError) {
+        console.error("Error confirming user:", confirmError);
       }
 
       // Sign in immediately after successful sign up
