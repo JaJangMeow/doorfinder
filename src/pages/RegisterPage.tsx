@@ -63,7 +63,26 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Register with Supabase
+      // Check if email already exists
+      const { data: existingUsers, error: lookupError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (lookupError) throw lookupError;
+      
+      if (existingUsers) {
+        toast({
+          title: "Email already exists",
+          description: "This email is already registered. Please use a different email or login instead.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Register with Supabase (we'll skip email confirmation by using signUp + auto-sign in)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -71,28 +90,27 @@ const RegisterPage: React.FC = () => {
           data: {
             full_name: name,
           },
+          emailRedirectTo: window.location.origin,
         },
       });
       
       if (error) throw error;
+
+      // Immediately sign in to avoid confirmation email
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Check if email confirmation is required
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        toast({
-          title: "Email already registered",
-          description: "This email is already in use. Please try logging in instead.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (signInError) throw signInError;
       
       // Success toast
       toast({
         title: "Account created!",
-        description: "Your account has been successfully created.",
+        description: "Your account has been successfully created and you're now logged in.",
       });
       
-      // Redirect to home
+      // Redirect to browse
       navigate('/browse');
     } catch (error: any) {
       console.error("Registration error:", error);

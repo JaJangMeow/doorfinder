@@ -56,7 +56,15 @@ const App = () => {
     // If auth status is still loading, return nothing to prevent flicker
     if (isAuthenticated === null) return null;
     
-    return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  };
+
+  // Restricted to authenticated users only
+  const AuthOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+    // If auth status is still loading, return nothing to prevent flicker
+    if (isAuthenticated === null) return null;
+    
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
 
   return (
@@ -72,36 +80,18 @@ const App = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/browse" element={<BrowsePage />} />
             
-            {/* Protected Routes */}
-            <Route path="/home" element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            } />
-            <Route path="/property/:id" element={
-              <ProtectedRoute>
-                <PropertyDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/search" element={
-              <ProtectedRoute>
-                <SearchPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/saved" element={
-              <ProtectedRoute>
-                <SavedPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            } />
+            {/* Semi-Protected Routes - accessible but functionality limited for guests */}
+            <Route path="/home" element={<Index />} />
+            <Route path="/property/:id" element={<PropertyDetail />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/saved" element={<SavedPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            
+            {/* Fully Protected Routes - only for authenticated users */}
             <Route path="/post" element={
-              <ProtectedRoute>
+              <AuthOnlyRoute>
                 <PostPropertyPage />
-              </ProtectedRoute>
+              </AuthOnlyRoute>
             } />
             
             {/* Catch-all route */}

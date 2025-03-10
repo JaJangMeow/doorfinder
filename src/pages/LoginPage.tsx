@@ -49,7 +49,36 @@ const LoginPage: React.FC = () => {
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          // Since we're skipping confirmation, this should rarely happen
+          // But handle it just in case
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+            }
+          });
+          
+          if (!signUpError) {
+            // Try to sign in again
+            const { error: retryError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            
+            if (retryError) throw retryError;
+          } else {
+            throw signUpError;
+          }
+        } else {
+          throw error;
+        }
+      }
       
       // Success toast
       toast({
@@ -57,7 +86,7 @@ const LoginPage: React.FC = () => {
         description: "You have successfully logged in.",
       });
       
-      // Redirect to home
+      // Redirect to browse
       navigate('/browse');
     } catch (error: any) {
       console.error("Login error:", error);
