@@ -13,7 +13,7 @@ const WelcomePage: React.FC = () => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/browse');
+        navigate('/home');
       }
     };
     

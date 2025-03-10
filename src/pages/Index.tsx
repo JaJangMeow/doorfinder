@@ -1,18 +1,16 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import SearchBar from "@/components/SearchBar";
 import PropertyCard from "@/components/PropertyCard";
 import Button from "@/components/Button";
 import TabBar from "@/components/TabBar";
-import { Search, Building, ChevronDown, MapPin, School, BookOpen } from "lucide-react";
+import { Building, ChevronDown, BookOpen } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
 
 const Index: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -30,11 +28,6 @@ const Index: React.FC = () => {
       });
     }
   }, [error, toast]);
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    navigate(`/search?q=${encodeURIComponent(term)}`);
-  };
 
   return (
     <div className="min-h-screen pb-16 overflow-x-hidden">
@@ -59,34 +52,6 @@ const Index: React.FC = () => {
             <p className="text-muted-foreground mb-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
               Connect with fellow students and find affordable housing near your campus.
             </p>
-            
-            <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
-              <SearchBar 
-                onSearch={handleSearch}
-                placeholder="Search by college, location..."
-                className="max-w-xl mb-4"
-              />
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 animate-slide-up" style={{ animationDelay: "300ms" }}>
-              <Button 
-                variant="primary" 
-                size="md"
-                iconLeft={<MapPin size={18} />}
-                onClick={() => navigate('/search')}
-              >
-                Find Housing
-              </Button>
-              <Button 
-                variant="outline" 
-                size="md" 
-                className="border-primary text-primary hover:bg-primary/10"
-                iconLeft={<School size={18} />}
-                onClick={() => navigate('/search?filter=colleges')}
-              >
-                Browse by College
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -163,9 +128,9 @@ const Index: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="bg-white p-6 rounded-lg shadow-sm text-center">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Search className="text-primary" size={20} />
+                <BookOpen className="text-primary" size={20} />
               </div>
-              <h3 className="text-lg font-medium mb-2">Search</h3>
+              <h3 className="text-lg font-medium mb-2">Browse</h3>
               <p className="text-muted-foreground text-sm">
                 Find housing near your campus
               </p>
@@ -173,7 +138,7 @@ const Index: React.FC = () => {
             
             <div className="bg-white p-6 rounded-lg shadow-sm text-center">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MapPin className="text-primary" size={20} />
+                <Building className="text-primary" size={20} />
               </div>
               <h3 className="text-lg font-medium mb-2">Connect</h3>
               <p className="text-muted-foreground text-sm">
