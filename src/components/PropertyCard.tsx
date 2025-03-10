@@ -17,9 +17,10 @@ export interface PropertyData {
 interface PropertyCardProps {
   property: PropertyData;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, className }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -51,6 +52,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className }) => {
         "group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 card-hover",
         className
       )}
+      style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
