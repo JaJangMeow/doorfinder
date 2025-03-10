@@ -14,17 +14,7 @@ Deno.serve(async (req) => {
 
   // Get the service role key for admin API access
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://lpazfekvismxebaolpgt.supabase.co'
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-  if (!supabaseServiceKey) {
-    return new Response(
-      JSON.stringify({ error: 'Service role key is required' }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
-  }
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYXpmZWt2aXNteGViYW9scGd0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTYwMTcyMSwiZXhwIjoyMDU3MTc3NzIxfQ.8lvSQ7cKbdVLVU8voyN6aET7uXFwfaLHW_JMLCxQaHY'
 
   // Create a Supabase client with the service role key
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
