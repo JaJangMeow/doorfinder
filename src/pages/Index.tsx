@@ -71,7 +71,7 @@ const Index: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-3 animate-slide-up" style={{ animationDelay: "300ms" }}>
               <Button 
                 variant="primary" 
-                size="default"
+                size="md"
                 iconLeft={<MapPin size={18} />}
                 onClick={() => navigate('/search')}
               >
@@ -79,7 +79,7 @@ const Index: React.FC = () => {
               </Button>
               <Button 
                 variant="outline" 
-                size="default" 
+                size="md" 
                 className="border-primary text-primary hover:bg-primary/10"
                 iconLeft={<School size={18} />}
                 onClick={() => navigate('/search?filter=colleges')}
