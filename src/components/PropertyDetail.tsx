@@ -24,6 +24,7 @@ export interface PropertyDetailData {
   longitude: number | null;
   hasHall?: boolean;
   hasSeparateKitchen?: boolean;
+  nearbyCollege?: string;
 }
 
 interface PropertyDetailProps {
@@ -34,7 +35,6 @@ const PropertyDetail: React.FC<PropertyDetailProps> = ({ property }) => {
   const { toast } = useToast();
   const mapRef = React.useRef<HTMLDivElement>(null);
   
-  // Initialize Google Map when component mounts
   React.useEffect(() => {
     if (mapRef.current && property.latitude && property.longitude && window.google?.maps) {
       const location = { lat: property.latitude, lng: property.longitude };
@@ -63,16 +63,14 @@ const PropertyDetail: React.FC<PropertyDetailProps> = ({ property }) => {
     });
   };
 
-  // Format the available date
   const formattedDate = new Date(property.availableFrom).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
   
-  // Calculate the number of months since the property was posted
-  const monthsAgo = 1; // This would be calculated from createdAt if available
-  
+  const monthsAgo = 1;
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
@@ -123,6 +121,12 @@ const PropertyDetail: React.FC<PropertyDetailProps> = ({ property }) => {
                 <Calendar size={20} className="mr-1 text-primary" />
                 <span>Available: {formattedDate}</span>
               </div>
+              {property.nearbyCollege && (
+                <div className="flex items-center">
+                  <User size={20} className="mr-1 text-primary" />
+                  <span>Near: {property.nearbyCollege}</span>
+                </div>
+              )}
             </div>
             
             <div className="mb-8">
