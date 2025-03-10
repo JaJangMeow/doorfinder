@@ -1,14 +1,76 @@
-
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
 
-export const getProperties = async (): Promise<PropertyData[]> => {
+export interface PropertyFilter {
+  minPrice?: number;
+  maxPrice?: number;
+  minBedrooms?: number;
+  maxBedrooms?: number;
+  availableFrom?: string;
+}
+
+export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest';
+
+export const getProperties = async (
+  filters?: PropertyFilter,
+  sortOption?: SortOption
+): Promise<PropertyData[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+      
+    // Apply filters if provided
+    if (filters) {
+      if (filters.minPrice) {
+        query = query.gte('price', filters.minPrice);
+      }
+      
+      if (filters.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
+      }
+      
+      if (filters.minBedrooms) {
+        query = query.gte('bedrooms', filters.minBedrooms);
+      }
+      
+      if (filters.maxBedrooms) {
+        query = query.lte('bedrooms', filters.maxBedrooms);
+      }
+      
+      if (filters.availableFrom) {
+        query = query.gte('available_from', filters.availableFrom);
+      }
+    }
+    
+    // Apply sorting
+    if (sortOption) {
+      switch (sortOption) {
+        case 'price_asc':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price_desc':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'bedrooms_desc':
+          query = query.order('bedrooms', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'oldest':
+          query = query.order('created_at', { ascending: true });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+    } else {
+      // Default sorting is newest first
+      query = query.order('created_at', { ascending: false });
+    }
+    
+    const { data, error } = await query;
       
     if (error) throw error;
     
@@ -27,19 +89,73 @@ export const getProperties = async (): Promise<PropertyData[]> => {
   }
 };
 
-export const searchPropertiesByCollege = async (collegeName: string): Promise<PropertyData[]> => {
+export const searchPropertiesByCollege = async (
+  collegeName: string, 
+  filters?: PropertyFilter,
+  sortOption?: SortOption
+): Promise<PropertyData[]> => {
   try {
-    // If no college name provided, return all properties
+    // If no college name provided, return filtered properties
     if (!collegeName.trim()) {
-      return getProperties();
+      return getProperties(filters, sortOption);
     }
     
     // Search for the college name in the description field (which includes the nearby_college information)
-    const { data, error } = await supabase
+    let query = supabase
       .from('properties')
       .select('*')
-      .ilike('description', `%${collegeName}%`)
-      .order('created_at', { ascending: false });
+      .ilike('description', `%${collegeName}%`);
+      
+    // Apply filters if provided
+    if (filters) {
+      if (filters.minPrice) {
+        query = query.gte('price', filters.minPrice);
+      }
+      
+      if (filters.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
+      }
+      
+      if (filters.minBedrooms) {
+        query = query.gte('bedrooms', filters.minBedrooms);
+      }
+      
+      if (filters.maxBedrooms) {
+        query = query.lte('bedrooms', filters.maxBedrooms);
+      }
+      
+      if (filters.availableFrom) {
+        query = query.gte('available_from', filters.availableFrom);
+      }
+    }
+    
+    // Apply sorting
+    if (sortOption) {
+      switch (sortOption) {
+        case 'price_asc':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price_desc':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'bedrooms_desc':
+          query = query.order('bedrooms', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'oldest':
+          query = query.order('created_at', { ascending: true });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+    } else {
+      // Default sorting is newest first
+      query = query.order('created_at', { ascending: false });
+    }
+    
+    const { data, error } = await query;
       
     if (error) throw error;
     

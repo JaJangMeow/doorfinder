@@ -5,16 +5,23 @@ import { useToast } from "@/components/ui/use-toast";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import Button from "@/components/Button";
+import LocationPicker from "@/components/LocationPicker";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Home, Calendar, User, Mail, Phone, Upload } from "lucide-react";
 
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
 const PostPropertyPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coordinates, setCoordinates] = useState<Coordinates>({ lat: 12.9716, lng: 77.5946 });
   const [formData, setFormData] = useState({
     title: "",
     address: "",
@@ -34,6 +41,10 @@ const PostPropertyPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleLocationSelect = (coords: Coordinates) => {
+    setCoordinates(coords);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -48,7 +59,7 @@ const PostPropertyPage: React.FC = () => {
         throw new Error("Price and bedrooms must be valid numbers");
       }
 
-      // Create the property record
+      // Create the property record with location coordinates
       const { data, error } = await supabase
         .from('properties')
         .insert([
@@ -57,12 +68,14 @@ const PostPropertyPage: React.FC = () => {
             address: formData.address,
             price: numericPrice,
             bedrooms: numericBedrooms,
-            description: `${formData.description}\n\nNearby College: ${formData.nearby_college}`,
+            description: `${formData.description}\n\nNearby College: ${formData.nearby_college}\n\nLocation Coordinates: ${coordinates.lat}, ${coordinates.lng}`,
             available_from: formData.available_from || new Date().toISOString().split('T')[0],
             image_url: formData.image_url,
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
-            contact_phone: formData.contact_phone
+            contact_phone: formData.contact_phone,
+            latitude: coordinates.lat,
+            longitude: coordinates.lng
           }
         ])
         .select();
@@ -197,6 +210,14 @@ const PostPropertyPage: React.FC = () => {
                     onChange={handleChange}
                     required
                     className="mt-1 min-h-[120px]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="block mb-2">Property Location</Label>
+                  <LocationPicker 
+                    onLocationSelect={handleLocationSelect}
+                    defaultLocation={coordinates}
                   />
                 </div>
               </div>

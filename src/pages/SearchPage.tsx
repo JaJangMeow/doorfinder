@@ -3,15 +3,18 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import SearchBar from "@/components/SearchBar";
+import FilterSortPanel from "@/components/FilterSortPanel";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BookOpen, School } from "lucide-react";
-import { searchPropertiesByCollege } from "@/services/propertyService";
+import { Search, BookOpen, School, Filter } from "lucide-react";
+import { searchPropertiesByCollege, PropertyFilter, SortOption } from "@/services/propertyService";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<PropertyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState<PropertyFilter>({});
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
   const { toast } = useToast();
 
   // Initial load of properties
@@ -20,7 +23,7 @@ const SearchPage: React.FC = () => {
       try {
         setIsLoading(true);
         // Start with all properties
-        const data = await searchPropertiesByCollege("");
+        const data = await searchPropertiesByCollege("", filters, sortOption);
         setProperties(data);
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -35,14 +38,14 @@ const SearchPage: React.FC = () => {
     };
 
     fetchProperties();
-  }, [toast]);
+  }, [toast, filters, sortOption]);
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
     
     try {
       setIsLoading(true);
-      const results = await searchPropertiesByCollege(term);
+      const results = await searchPropertiesByCollege(term, filters, sortOption);
       setProperties(results);
     } catch (error) {
       console.error('Error searching properties:', error);
@@ -54,6 +57,14 @@ const SearchPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApplyFilters = (newFilters: PropertyFilter) => {
+    setFilters(newFilters);
+  };
+
+  const handleSort = (option: SortOption) => {
+    setSortOption(option);
   };
 
   return (
@@ -73,6 +84,11 @@ const SearchPage: React.FC = () => {
               className="w-full"
             />
           </div>
+          
+          <FilterSortPanel 
+            onApplyFilters={handleApplyFilters}
+            onSort={handleSort}
+          />
           
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
