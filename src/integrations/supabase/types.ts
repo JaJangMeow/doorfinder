@@ -27,6 +27,7 @@ export type Database = {
           images: string[] | null
           latitude: number | null
           longitude: number | null
+          nearby_college: string | null
           price: number
           square_feet: number | null
           title: string
@@ -48,6 +49,7 @@ export type Database = {
           images?: string[] | null
           latitude?: number | null
           longitude?: number | null
+          nearby_college?: string | null
           price: number
           square_feet?: number | null
           title: string
@@ -69,6 +71,7 @@ export type Database = {
           images?: string[] | null
           latitude?: number | null
           longitude?: number | null
+          nearby_college?: string | null
           price?: number
           square_feet?: number | null
           title?: string

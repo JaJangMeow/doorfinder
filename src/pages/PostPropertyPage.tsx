@@ -194,6 +194,16 @@ const PostPropertyPage: React.FC = () => {
       
       console.log("Submitting property with coordinates:", coordinates);
       console.log("Uploading images:", images);
+      console.log("Form data:", formData);
+
+      // Data validation before insert
+      if (!formData.title || !formData.address || isNaN(numericPrice) || !coordinates.lat || !coordinates.lng) {
+        throw new Error("Required fields are missing");
+      }
+
+      if (images.length === 0) {
+        throw new Error("At least one image is required");
+      }
 
       // Create the property record
       const { data, error } = await supabase
@@ -217,12 +227,15 @@ const PostPropertyPage: React.FC = () => {
             longitude: coordinates.lng,
             has_hall: formData.has_hall,
             has_separate_kitchen: formData.has_separate_kitchen,
-            nearby_college: formData.nearby_college,
+            nearby_college: formData.nearby_college || "Not specified",
           }
         ])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
       
       toast({
         title: "Success!",
@@ -230,11 +243,11 @@ const PostPropertyPage: React.FC = () => {
       });
       
       navigate('/search');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error posting property:', error);
       toast({
         title: "Error",
-        description: "Failed to post property. Please try again.",
+        description: error.message || "Failed to post property. Please try again.",
         variant: "destructive",
       });
     } finally {

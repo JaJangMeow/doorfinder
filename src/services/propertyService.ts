@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
@@ -85,7 +84,7 @@ export const getProperties = async (
       }
       
       if (filters.college) {
-        query = query.ilike('description', `%${filters.college}%`);
+        query = query.ilike('nearby_college', `%${filters.college}%`);
       }
 
       if (filters.hasHall !== undefined) {
@@ -187,7 +186,7 @@ export const searchPropertiesByCollege = async (
     let query = supabase
       .from('properties')
       .select('*')
-      .ilike('description', `%${collegeName}%`);
+      .ilike('nearby_college', `%${collegeName}%`);
       
     if (filters) {
       if (filters.minPrice) {
@@ -332,7 +331,8 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       latitude: data.latitude,
       longitude: data.longitude,
       hasHall: data.has_hall,
-      hasSeparateKitchen: data.has_separate_kitchen
+      hasSeparateKitchen: data.has_separate_kitchen,
+      nearbyCollege: data.nearby_college || 'Not specified'
     };
   } catch (error) {
     console.error('Error fetching property details:', error);
