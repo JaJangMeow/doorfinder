@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
@@ -16,6 +15,10 @@ export interface PropertyFilter {
   };
 }
 
+interface PropertyDataWithDistance extends PropertyData {
+  distance?: number;
+}
+
 export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest' | 'nearest';
 
 export const getProperties = async (
@@ -27,7 +30,6 @@ export const getProperties = async (
       .from('properties')
       .select('*');
       
-    // Apply filters if provided
     if (filters) {
       if (filters.minPrice) {
         query = query.gte('price', filters.minPrice);
@@ -50,7 +52,6 @@ export const getProperties = async (
       }
     }
     
-    // Apply sorting
     if (sortOption) {
       switch (sortOption) {
         case 'price_asc':
@@ -72,7 +73,6 @@ export const getProperties = async (
           query = query.order('created_at', { ascending: false });
       }
     } else {
-      // Default sorting is newest first
       query = query.order('created_at', { ascending: false });
     }
     
@@ -80,7 +80,7 @@ export const getProperties = async (
       
     if (error) throw error;
     
-    let properties = data.map((item: any) => ({
+    let properties: PropertyDataWithDistance[] = data.map((item: any) => ({
       id: item.id,
       title: item.title,
       address: item.address,
@@ -92,12 +92,10 @@ export const getProperties = async (
       longitude: item.longitude
     }));
     
-    // Calculate distance and filter by max distance if needed
     if (filters?.nearLocation && filters.maxDistance) {
       properties = properties.filter(property => {
         if (!property.latitude || !property.longitude) return false;
         
-        // Calculate distance using the Haversine formula
         const distance = calculateDistance(
           filters.nearLocation.lat,
           filters.nearLocation.lng,
@@ -105,14 +103,11 @@ export const getProperties = async (
           property.longitude
         );
         
-        // Add the distance to the property object for sorting
         property.distance = distance;
         
-        // Filter by max distance (in kilometers)
         return distance <= filters.maxDistance;
       });
       
-      // Sort by distance if 'nearest' sort option is selected
       if (sortOption === 'nearest') {
         properties.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
       }
@@ -131,18 +126,15 @@ export const searchPropertiesByCollege = async (
   sortOption?: SortOption
 ): Promise<PropertyData[]> => {
   try {
-    // If no college name provided, return filtered properties
     if (!collegeName.trim()) {
       return getProperties(filters, sortOption);
     }
     
-    // Search for the college name in the description field (which includes the nearby_college information)
     let query = supabase
       .from('properties')
       .select('*')
       .ilike('description', `%${collegeName}%`);
       
-    // Apply filters if provided
     if (filters) {
       if (filters.minPrice) {
         query = query.gte('price', filters.minPrice);
@@ -165,7 +157,6 @@ export const searchPropertiesByCollege = async (
       }
     }
     
-    // Apply sorting
     if (sortOption) {
       switch (sortOption) {
         case 'price_asc':
@@ -187,7 +178,6 @@ export const searchPropertiesByCollege = async (
           query = query.order('created_at', { ascending: false });
       }
     } else {
-      // Default sorting is newest first
       query = query.order('created_at', { ascending: false });
     }
     
@@ -195,7 +185,7 @@ export const searchPropertiesByCollege = async (
       
     if (error) throw error;
     
-    let properties = data.map((item: any) => ({
+    let properties: PropertyDataWithDistance[] = data.map((item: any) => ({
       id: item.id,
       title: item.title,
       address: item.address,
@@ -207,12 +197,10 @@ export const searchPropertiesByCollege = async (
       longitude: item.longitude
     }));
     
-    // Calculate distance and filter by max distance if needed
     if (filters?.nearLocation && filters.maxDistance) {
       properties = properties.filter(property => {
         if (!property.latitude || !property.longitude) return false;
         
-        // Calculate distance using the Haversine formula
         const distance = calculateDistance(
           filters.nearLocation.lat,
           filters.nearLocation.lng,
@@ -220,14 +208,11 @@ export const searchPropertiesByCollege = async (
           property.longitude
         );
         
-        // Add the distance to the property object for sorting
         property.distance = distance;
         
-        // Filter by max distance (in kilometers)
         return distance <= filters.maxDistance;
       });
       
-      // Sort by distance if 'nearest' sort option is selected
       if (sortOption === 'nearest') {
         properties.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
       }
@@ -274,7 +259,6 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
   }
 };
 
-// Helper function to calculate distance between two points using the Haversine formula
 export const calculateDistance = (
   lat1: number, 
   lon1: number, 

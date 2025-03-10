@@ -9,6 +9,13 @@ import TabBar from "@/components/TabBar";
 import Navbar from "@/components/Navbar";
 import { GOOGLE_MAPS_API_KEY } from "@/lib/supabase";
 
+// Define a global interface to make TypeScript aware of the google property
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
 const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();

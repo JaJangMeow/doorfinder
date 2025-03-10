@@ -20,6 +20,8 @@ export interface PropertyDetailData {
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface PropertyDetailProps {

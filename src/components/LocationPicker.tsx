@@ -13,12 +13,16 @@ interface LocationPickerProps {
   onLocationSelect: (coordinates: Coordinates) => void;
   defaultLocation?: Coordinates;
   className?: string;
+  height?: string;
+  zoom?: number;
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = ({ 
   onLocationSelect, 
   defaultLocation = { lat: 12.9716, lng: 77.5946 }, // Default to Bangalore coordinates
-  className 
+  className,
+  height = '300px',
+  zoom = 12
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -36,7 +40,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       container: mapContainer.current,
       style: 'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_key',
       center: [coordinates.lng, coordinates.lat],
-      zoom: 12
+      zoom: zoom
     });
     
     map.current = initializedMap;
@@ -81,7 +85,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     return () => {
       initializedMap.remove();
     };
-  }, [onLocationSelect]);
+  }, [onLocationSelect, zoom]);
 
   // Update marker if defaultLocation changes
   useEffect(() => {
@@ -98,7 +102,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   return (
     <div className={`${className || ''}`}>
       <div className="glass">
-        <div ref={mapContainer} className="w-full h-[300px] rounded-lg" />
+        <div ref={mapContainer} className="w-full rounded-lg" style={{ height }} />
       </div>
       <div className="mt-2 text-sm flex items-center text-muted-foreground">
         <MapPin size={14} className="mr-1" />
