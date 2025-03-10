@@ -6,11 +6,12 @@ import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import Button from "@/components/Button";
 import LocationPicker from "@/components/LocationPicker";
+import ImageUploader from "@/components/ImageUploader";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Home, Calendar, User, Mail, Phone, Upload } from "lucide-react";
+import { MapPin, Home, Calendar, User, Mail, Phone, Upload, Image } from "lucide-react";
 
 interface Coordinates {
   lat: number;
@@ -22,6 +23,7 @@ const PostPropertyPage: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: 12.9716, lng: 77.5946 });
+  const [images, setImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     address: "",
@@ -33,7 +35,6 @@ const PostPropertyPage: React.FC = () => {
     contact_name: "",
     contact_email: "",
     contact_phone: "",
-    image_url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80"
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -50,8 +51,22 @@ const PostPropertyPage: React.FC = () => {
     });
   };
 
+  const handleImagesChange = (urls: string[]) => {
+    setImages(urls);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that at least one image is uploaded
+    if (images.length === 0) {
+      toast({
+        title: "Image required",
+        description: "Please upload at least one image of the property.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setIsSubmitting(true);
@@ -65,8 +80,9 @@ const PostPropertyPage: React.FC = () => {
       }
 
       console.log("Submitting property with coordinates:", coordinates);
+      console.log("Uploading images:", images);
 
-      // Create the property record with location coordinates
+      // Create the property record with location coordinates and images
       const { data, error } = await supabase
         .from('properties')
         .insert([
@@ -77,7 +93,8 @@ const PostPropertyPage: React.FC = () => {
             bedrooms: numericBedrooms,
             description: `${formData.description}\n\nNearby College: ${formData.nearby_college}\n\nLocation Coordinates: ${coordinates.lat}, ${coordinates.lng}`,
             available_from: formData.available_from || new Date().toISOString().split('T')[0],
-            image_url: formData.image_url,
+            image_url: images[0], // Use the first image as the main image
+            images: images, // Store all images in the images array
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
             contact_phone: formData.contact_phone,
@@ -217,6 +234,15 @@ const PostPropertyPage: React.FC = () => {
                     onChange={handleChange}
                     required
                     className="mt-1 min-h-[120px]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="mb-2 block">Property Images</Label>
+                  <ImageUploader 
+                    onImagesChange={handleImagesChange}
+                    initialImages={images}
+                    maxImages={5}
                   />
                 </div>
                 

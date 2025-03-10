@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { 
   Filter, SortAsc, SortDesc, Calendar, ChevronsUpDown, 
-  Home, DollarSign, ArrowDown, ArrowUp, Bed 
+  Home, DollarSign, ArrowDown, ArrowUp, Bed, School
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PropertyFilter, SortOption } from '@/services/propertyService';
+import { PropertyFilter, SortOption, BANGALORE_COLLEGES } from '@/services/propertyService';
 import {
   Popover,
   PopoverContent,
@@ -20,6 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 interface FilterSortPanelProps {
   onApplyFilters: (filters: PropertyFilter) => void;
@@ -37,10 +45,12 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
     maxPrice: undefined,
     minBedrooms: undefined,
     maxBedrooms: undefined,
-    availableFrom: undefined
+    availableFrom: undefined,
+    college: undefined
   });
   
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [collegeFilterOpen, setCollegeFilterOpen] = useState(false);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,6 +66,14 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
       ...prev,
       [name]: value === '' ? undefined : value
     }));
+  };
+
+  const handleCollegeSelect = (college: string) => {
+    setFilters(prev => ({
+      ...prev,
+      college
+    }));
+    setCollegeFilterOpen(false);
   };
 
   const handleApplyFilters = () => {
@@ -74,7 +92,8 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
       maxPrice: undefined,
       minBedrooms: undefined,
       maxBedrooms: undefined,
-      availableFrom: undefined
+      availableFrom: undefined,
+      college: undefined
     });
     onApplyFilters({});
   };
@@ -86,6 +105,11 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
           <Button variant="outline" className="flex items-center gap-2">
             <Filter size={16} />
             <span>Filter</span>
+            {Object.values(filters).some(val => val !== undefined) && (
+              <span className="ml-1 rounded-full bg-primary text-white text-xs w-5 h-5 flex items-center justify-center">
+                {Object.values(filters).filter(val => val !== undefined).length}
+              </span>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-4">
@@ -158,6 +182,44 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
                 onChange={handleDateChange}
               />
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <School size={16} className="text-muted-foreground" />
+                <Label>Near College</Label>
+              </div>
+              <Popover open={collegeFilterOpen} onOpenChange={setCollegeFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between"
+                    role="combobox"
+                  >
+                    {filters.college || "Select college..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search college..." />
+                    <CommandEmpty>No college found.</CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        {BANGALORE_COLLEGES.map((college) => (
+                          <CommandItem
+                            key={college}
+                            value={college}
+                            onSelect={() => handleCollegeSelect(college)}
+                          >
+                            {college}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             
             <div className="flex justify-between pt-2">
               <Button variant="outline" size="sm" onClick={clearFilters}>
@@ -186,9 +248,40 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
             <SelectItem value="price_asc">Price: Low to High</SelectItem>
             <SelectItem value="price_desc">Price: High to Low</SelectItem>
             <SelectItem value="bedrooms_desc">Most Bedrooms</SelectItem>
+            <SelectItem value="nearest">Nearest First</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="flex items-center gap-2">
+            <School size={16} />
+            <span>Colleges</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-0">
+          <Command>
+            <CommandInput placeholder="Search college..." />
+            <CommandList className="max-h-[300px]">
+              <CommandEmpty>No college found.</CommandEmpty>
+              <CommandGroup heading="Popular Colleges in Bangalore">
+                {BANGALORE_COLLEGES.map((college) => (
+                  <CommandItem
+                    key={college}
+                    onSelect={() => {
+                      setFilters(prev => ({ ...prev, college }));
+                      onApplyFilters({ ...filters, college });
+                    }}
+                  >
+                    {college}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

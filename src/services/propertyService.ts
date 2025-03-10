@@ -1,30 +1,21 @@
+
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
 
-interface PropertyDataWithDistance extends PropertyData {
-  distance?: number;
-  latitude: number | null;
-  longitude: number | null;
-}
-
-declare module "@/components/PropertyDetail" {
-  interface PropertyDetailData {
+// Update PropertyData to include distance for sorting
+declare module "@/components/PropertyCard" {
+  interface PropertyData {
     id: string;
     title: string;
     address: string;
     price: number;
     bedrooms: number;
-    bathrooms: number;
-    squareFeet: number;
     availableFrom: string;
-    description: string;
-    images: string[];
-    contactName: string;
-    contactEmail: string;
-    contactPhone: string;
+    imageUrl: string;
     latitude: number | null;
     longitude: number | null;
+    distance?: number;
   }
 }
 
@@ -39,9 +30,28 @@ export interface PropertyFilter {
     lat: number;
     lng: number;
   };
+  college?: string;
 }
 
 export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest' | 'nearest';
+
+// List of colleges in Bangalore
+export const BANGALORE_COLLEGES = [
+  'Christ University',
+  'Bangalore University',
+  'Jain University',
+  'RV College of Engineering',
+  'PES University',
+  'MS Ramaiah Institute of Technology',
+  'Bangalore Institute of Technology',
+  'Mount Carmel College',
+  'St. Joseph\'s College',
+  'Indian Institute of Science (IISc)',
+  'National Law School of India University',
+  'Kristu Jayanti College',
+  'Presidency College',
+  'Alliance University'
+];
 
 export const getProperties = async (
   filters?: PropertyFilter,
@@ -71,6 +81,10 @@ export const getProperties = async (
       
       if (filters.availableFrom) {
         query = query.gte('available_from', filters.availableFrom);
+      }
+      
+      if (filters.college) {
+        query = query.ilike('description', `%${filters.college}%`);
       }
     }
     
@@ -102,7 +116,7 @@ export const getProperties = async (
       
     if (error) throw error;
     
-    let properties: PropertyDataWithDistance[] = data.map((item: any) => ({
+    let properties = data.map((item: any) => ({
       id: item.id,
       title: item.title,
       address: item.address,
@@ -177,6 +191,10 @@ export const searchPropertiesByCollege = async (
       if (filters.availableFrom) {
         query = query.gte('available_from', filters.availableFrom);
       }
+      
+      if (filters.college) {
+        query = query.ilike('description', `%${filters.college}%`);
+      }
     }
     
     if (sortOption) {
@@ -207,7 +225,7 @@ export const searchPropertiesByCollege = async (
       
     if (error) throw error;
     
-    let properties: PropertyDataWithDistance[] = data.map((item: any) => ({
+    let properties = data.map((item: any) => ({
       id: item.id,
       title: item.title,
       address: item.address,
