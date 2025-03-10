@@ -137,7 +137,8 @@ export const getProperties = async (
       latitude: item.latitude,
       longitude: item.longitude,
       hasHall: item.has_hall,
-      hasSeparateKitchen: item.has_separate_kitchen
+      hasSeparateKitchen: item.has_separate_kitchen,
+      distance: undefined // Initialize with undefined
     }));
     
     if (filters?.nearLocation && filters.maxDistance) {
@@ -266,7 +267,8 @@ export const searchPropertiesByCollege = async (
       latitude: item.latitude,
       longitude: item.longitude,
       hasHall: item.has_hall,
-      hasSeparateKitchen: item.has_separate_kitchen
+      hasSeparateKitchen: item.has_separate_kitchen,
+      distance: undefined // Initialize with undefined
     }));
     
     if (filters?.nearLocation && filters.maxDistance) {

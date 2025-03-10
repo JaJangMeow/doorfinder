@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { MapPin, Calendar, Home, ChevronRight } from "lucide-react";
+import { MapPin, Calendar, Home, Bath, ChevronRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export interface PropertyData {
@@ -95,6 +96,22 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
           </div>
         </div>
 
+        {/* Amenities */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {property.hasHall && (
+            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center">
+              <Check size={12} className="mr-1 text-primary" />
+              Hall
+            </span>
+          )}
+          {property.hasSeparateKitchen && (
+            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center">
+              <Check size={12} className="mr-1 text-primary" />
+              Separate Kitchen
+            </span>
+          )}
+        </div>
+
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
           <div className="flex gap-3">
             <div className="flex items-center text-sm">
@@ -102,12 +119,21 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
               <span>{property.bedrooms} {property.bedrooms === 1 ? 'bed' : 'beds'}</span>
             </div>
             <div className="flex items-center text-sm">
-              <Calendar size={14} className="mr-1 text-muted-foreground" />
-              <span>{formatDate(property.availableFrom)}</span>
+              <Bath size={14} className="mr-1 text-muted-foreground" />
+              <span>{property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}</span>
             </div>
           </div>
           <div className="font-semibold">${formatPrice(property.price)}</div>
         </div>
+
+        {property.distance !== undefined && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="flex items-center">
+              <MapPin size={12} className="mr-1" />
+              {property.distance.toFixed(1)} km away
+            </span>
+          </div>
+        )}
 
         <Link
           to={`/property/${property.id}`}

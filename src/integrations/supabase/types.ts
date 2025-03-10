@@ -20,6 +20,8 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           description: string | null
+          has_hall: boolean | null
+          has_separate_kitchen: boolean | null
           id: string
           image_url: string | null
           images: string[] | null
@@ -39,6 +41,8 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          has_hall?: boolean | null
+          has_separate_kitchen?: boolean | null
           id?: string
           image_url?: string | null
           images?: string[] | null
@@ -58,6 +62,8 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          has_hall?: boolean | null
+          has_separate_kitchen?: boolean | null
           id?: string
           image_url?: string | null
           images?: string[] | null
