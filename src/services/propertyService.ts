@@ -3,27 +3,14 @@ import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
 
-// Update PropertyData to include distance for sorting
-declare module "@/components/PropertyCard" {
-  interface PropertyData {
-    id: string;
-    title: string;
-    address: string;
-    price: number;
-    bedrooms: number;
-    availableFrom: string;
-    imageUrl: string;
-    latitude: number | null;
-    longitude: number | null;
-    distance?: number;
-  }
-}
-
+// All properties can include distance property for sorting
 export interface PropertyFilter {
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
   maxBedrooms?: number;
+  minBathrooms?: number; 
+  maxBathrooms?: number;
   availableFrom?: string;
   maxDistance?: number;
   nearLocation?: {
@@ -31,6 +18,8 @@ export interface PropertyFilter {
     lng: number;
   };
   college?: string;
+  hasHall?: boolean;
+  hasSeparateKitchen?: boolean;
 }
 
 export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest' | 'nearest';
@@ -50,7 +39,11 @@ export const BANGALORE_COLLEGES = [
   'National Law School of India University',
   'Kristu Jayanti College',
   'Presidency College',
-  'Alliance University'
+  'Alliance University',
+  'Bangalore Medical College',
+  'Reva University',
+  'BMS College of Engineering',
+  'New Horizon College'
 ];
 
 export const getProperties = async (
@@ -79,12 +72,28 @@ export const getProperties = async (
         query = query.lte('bedrooms', filters.maxBedrooms);
       }
       
+      if (filters.minBathrooms) {
+        query = query.gte('bathrooms', filters.minBathrooms);
+      }
+      
+      if (filters.maxBathrooms) {
+        query = query.lte('bathrooms', filters.maxBathrooms);
+      }
+      
       if (filters.availableFrom) {
         query = query.gte('available_from', filters.availableFrom);
       }
       
       if (filters.college) {
         query = query.ilike('description', `%${filters.college}%`);
+      }
+
+      if (filters.hasHall !== undefined) {
+        query = query.eq('has_hall', filters.hasHall);
+      }
+
+      if (filters.hasSeparateKitchen !== undefined) {
+        query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
       }
     }
     
@@ -122,10 +131,13 @@ export const getProperties = async (
       address: item.address,
       price: item.price,
       bedrooms: item.bedrooms,
+      bathrooms: item.bathrooms || 1,
       availableFrom: item.available_from,
       imageUrl: item.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
       latitude: item.latitude,
-      longitude: item.longitude
+      longitude: item.longitude,
+      hasHall: item.has_hall,
+      hasSeparateKitchen: item.has_separate_kitchen
     }));
     
     if (filters?.nearLocation && filters.maxDistance) {
@@ -139,13 +151,18 @@ export const getProperties = async (
           property.longitude
         );
         
+        // Explicitly assign distance to property
         property.distance = distance;
         
         return distance <= filters.maxDistance;
       });
       
       if (sortOption === 'nearest') {
-        properties.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        properties.sort((a, b) => {
+          const distanceA = a.distance !== undefined ? a.distance : Infinity;
+          const distanceB = b.distance !== undefined ? b.distance : Infinity;
+          return distanceA - distanceB;
+        });
       }
     }
     
@@ -188,12 +205,24 @@ export const searchPropertiesByCollege = async (
         query = query.lte('bedrooms', filters.maxBedrooms);
       }
       
+      if (filters.minBathrooms) {
+        query = query.gte('bathrooms', filters.minBathrooms);
+      }
+      
+      if (filters.maxBathrooms) {
+        query = query.lte('bathrooms', filters.maxBathrooms);
+      }
+      
       if (filters.availableFrom) {
         query = query.gte('available_from', filters.availableFrom);
       }
       
-      if (filters.college) {
-        query = query.ilike('description', `%${filters.college}%`);
+      if (filters.hasHall !== undefined) {
+        query = query.eq('has_hall', filters.hasHall);
+      }
+
+      if (filters.hasSeparateKitchen !== undefined) {
+        query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
       }
     }
     
@@ -231,10 +260,13 @@ export const searchPropertiesByCollege = async (
       address: item.address,
       price: item.price,
       bedrooms: item.bedrooms,
+      bathrooms: item.bathrooms || 1,
       availableFrom: item.available_from,
       imageUrl: item.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
       latitude: item.latitude,
-      longitude: item.longitude
+      longitude: item.longitude,
+      hasHall: item.has_hall,
+      hasSeparateKitchen: item.has_separate_kitchen
     }));
     
     if (filters?.nearLocation && filters.maxDistance) {
@@ -248,13 +280,18 @@ export const searchPropertiesByCollege = async (
           property.longitude
         );
         
+        // Explicitly assign distance to property
         property.distance = distance;
         
         return distance <= filters.maxDistance;
       });
       
       if (sortOption === 'nearest') {
-        properties.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        properties.sort((a, b) => {
+          const distanceA = a.distance !== undefined ? a.distance : Infinity;
+          const distanceB = b.distance !== undefined ? b.distance : Infinity;
+          return distanceA - distanceB;
+        });
       }
     }
     
@@ -291,7 +328,9 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       contactEmail: data.contact_email || 'contact@example.com',
       contactPhone: data.contact_phone || '(555) 123-4567',
       latitude: data.latitude,
-      longitude: data.longitude
+      longitude: data.longitude,
+      hasHall: data.has_hall,
+      hasSeparateKitchen: data.has_separate_kitchen
     };
   } catch (error) {
     console.error('Error fetching property details:', error);

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +22,8 @@ export interface PropertyDetailData {
   contactPhone: string;
   latitude: number | null;
   longitude: number | null;
+  hasHall?: boolean;
+  hasSeparateKitchen?: boolean;
 }
 
 interface PropertyDetailProps {

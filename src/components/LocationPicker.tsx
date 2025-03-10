@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Coordinates {
   lat: number;
@@ -28,6 +29,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [coordinates, setCoordinates] = useState<Coordinates>(defaultLocation);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Initialize map
   useEffect(() => {
@@ -99,9 +101,49 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     }
   }, [defaultLocation]);
 
+  const getCurrentLocation = () => {
+    setIsLocating(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newCoordinates = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          if (map.current && marker.current) {
+            marker.current.setLngLat([newCoordinates.lng, newCoordinates.lat]);
+            map.current.flyTo({
+              center: [newCoordinates.lng, newCoordinates.lat],
+              zoom: 15,
+              essential: true
+            });
+          }
+          
+          setCoordinates(newCoordinates);
+          onLocationSelect(newCoordinates);
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsLocating(false);
+        }
+      );
+    }
+  };
+
   return (
     <div className={`${className || ''}`}>
-      <div className="glass">
+      <div className="glass mb-2">
+        <Button 
+          variant="outline" 
+          onClick={getCurrentLocation}
+          disabled={isLocating}
+          className="w-full mb-2"
+        >
+          <MapPin size={16} className="mr-2" />
+          {isLocating ? 'Getting location...' : 'Use My Current Location'}
+        </Button>
         <div ref={mapContainer} className="w-full rounded-lg" style={{ height }} />
       </div>
       <div className="mt-2 text-sm flex items-center text-muted-foreground">

@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { 
-  Filter, SortAsc, SortDesc, Calendar, ChevronsUpDown, 
-  Home, DollarSign, ArrowDown, ArrowUp, Bed, School
+  Filter, SortAsc, ChevronsUpDown, 
+  Home, DollarSign, Bed, School, Bath, CheckSquare
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface FilterSortPanelProps {
   onApplyFilters: (filters: PropertyFilter) => void;
@@ -45,8 +46,12 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
     maxPrice: undefined,
     minBedrooms: undefined,
     maxBedrooms: undefined,
+    minBathrooms: undefined,
+    maxBathrooms: undefined,
     availableFrom: undefined,
-    college: undefined
+    college: undefined,
+    hasHall: undefined,
+    hasSeparateKitchen: undefined
   });
   
   const [sortOption, setSortOption] = useState<SortOption>('newest');
@@ -65,6 +70,13 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
     setFilters(prev => ({
       ...prev,
       [name]: value === '' ? undefined : value
+    }));
+  };
+
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFilters(prev => ({
+      ...prev,
+      [name]: checked
     }));
   };
 
@@ -92,8 +104,12 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
       maxPrice: undefined,
       minBedrooms: undefined,
       maxBedrooms: undefined,
+      minBathrooms: undefined,
+      maxBathrooms: undefined,
       availableFrom: undefined,
-      college: undefined
+      college: undefined,
+      hasHall: undefined,
+      hasSeparateKitchen: undefined
     });
     onApplyFilters({});
   };
@@ -169,20 +185,63 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-1">
-                <Calendar size={16} className="text-muted-foreground" />
-                <Label>Available From</Label>
+                <Bath size={16} className="text-muted-foreground" />
+                <Label>Bathrooms</Label>
               </div>
-              <Input
-                type="date"
-                name="availableFrom"
-                value={filters.availableFrom || ''}
-                onChange={handleDateChange}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Input
+                    type="number"
+                    name="minBathrooms"
+                    placeholder="Min"
+                    value={filters.minBathrooms || ''}
+                    onChange={handleFilterChange}
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="number"
+                    name="maxBathrooms"
+                    placeholder="Max"
+                    value={filters.maxBathrooms || ''}
+                    onChange={handleFilterChange}
+                  />
+                </div>
+              </div>
             </div>
 
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckSquare size={16} className="text-muted-foreground" />
+                <Label>Amenities</Label>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="hasHall" 
+                    checked={!!filters.hasHall} 
+                    onCheckedChange={(checked) => 
+                      handleCheckboxChange('hasHall', checked === true)
+                    }
+                  />
+                  <Label htmlFor="hasHall">Has Hall</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="hasSeparateKitchen" 
+                    checked={!!filters.hasSeparateKitchen} 
+                    onCheckedChange={(checked) => 
+                      handleCheckboxChange('hasSeparateKitchen', checked === true)
+                    }
+                  />
+                  <Label htmlFor="hasSeparateKitchen">Separate Kitchen</Label>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-1">
                 <School size={16} className="text-muted-foreground" />
@@ -203,7 +262,7 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
                   <Command>
                     <CommandInput placeholder="Search college..." />
                     <CommandEmpty>No college found.</CommandEmpty>
-                    <CommandList>
+                    <CommandList className="max-h-60">
                       <CommandGroup>
                         {BANGALORE_COLLEGES.map((college) => (
                           <CommandItem
@@ -263,9 +322,9 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
         <PopoverContent className="w-80 p-0">
           <Command>
             <CommandInput placeholder="Search college..." />
-            <CommandList className="max-h-[300px]">
+            <CommandList className="max-h-60">
               <CommandEmpty>No college found.</CommandEmpty>
-              <CommandGroup heading="Popular Colleges in Bangalore">
+              <CommandGroup heading="Colleges in Bangalore">
                 {BANGALORE_COLLEGES.map((college) => (
                   <CommandItem
                     key={college}

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { MapPin, Calendar, Home, ChevronRight } from "lucide-react";
@@ -12,6 +11,12 @@ export interface PropertyData {
   bedrooms: number;
   availableFrom: string;
   imageUrl: string;
+  latitude: number | null;
+  longitude: number | null;
+  distance?: number;
+  bathrooms?: number;
+  hasHall?: boolean;
+  hasSeparateKitchen?: boolean;
 }
 
 interface PropertyCardProps {
