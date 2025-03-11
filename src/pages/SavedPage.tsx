@@ -47,6 +47,12 @@ const SavedPage: React.FC = () => {
       
       if (savedError) throw savedError;
       
+      if (!savedData) {
+        setSavedProperties([]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Transform the data to match PropertyData interface
       const propertyData: PropertyData[] = savedData
         .filter(item => item.properties) // Filter out null properties
