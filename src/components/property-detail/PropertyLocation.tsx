@@ -22,12 +22,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     latitude !== 0 &&
     longitude !== 0;
 
-  console.log('PropertyLocation - Coordinates check:', { 
-    latitude,
-    longitude, 
-    hasValidCoordinates 
-  });
-
   return (
     <div className="mt-8">
       <h2 className="text-lg font-semibold text-gray-900">Location</h2>

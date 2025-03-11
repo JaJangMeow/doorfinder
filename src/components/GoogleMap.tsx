@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useGoogleMapsScript } from '@/hooks/useGoogleMapsScript';
 import { useGoogleMap } from '@/hooks/useGoogleMap';
@@ -11,54 +11,38 @@ interface GoogleMapProps {
   longitude: number;
 }
 
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
 const GoogleMap: React.FC<GoogleMapProps> = ({ latitude, longitude }) => {
-  const { scriptLoaded, scriptError } = useGoogleMapsScript();
+  const { loaded: scriptLoaded, error: scriptError } = useGoogleMapsScript();
   const { 
     mapRef, 
-    mapLoaded, 
-    mapError, 
-    setMapError, 
-    setMapLoaded, 
-    setMapInitialized,
-    initializeMap 
+    isReady: mapIsReady, 
+    error: mapError, 
+    retryMapInitialization 
   } = useGoogleMap({ 
     latitude, 
     longitude, 
-    scriptLoaded 
+    googleMapsLoaded: scriptLoaded 
   });
 
-  useEffect(() => {
-    console.log('GoogleMap component rendered with:', { latitude, longitude, scriptLoaded, mapLoaded, mapError });
-  }, [latitude, longitude, scriptLoaded, mapLoaded, mapError]);
-
   const handleTryAgain = () => {
-    console.log('Trying again to load map');
-    setMapError(false);
-    setMapLoaded(false);
-    setMapInitialized(false);
-    initializeMap();
+    retryMapInitialization();
   };
 
   const handleOpenInGoogleMaps = () => {
-    if (latitude && longitude) {
-      window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank');
-    }
+    window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, '_blank');
   };
 
+  // Show error state if any errors occurred
   if (mapError || scriptError) {
     return <MapError onTryAgain={handleTryAgain} onOpenInGoogleMaps={handleOpenInGoogleMaps} />;
   }
 
-  if (!mapLoaded) {
+  // Show loading state if map is not ready yet
+  if (!mapIsReady) {
     return <MapLoading />;
   }
 
+  // Render the map
   return (
     <div className="relative w-full h-[400px]">
       <div 
