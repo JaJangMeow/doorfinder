@@ -73,7 +73,6 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
 
   // Function to retry map initialization
   const retryMapInitialization = () => {
-    // Clear existing instances
     if (markerRef.current) {
       markerRef.current.setMap(null);
       markerRef.current = null;
