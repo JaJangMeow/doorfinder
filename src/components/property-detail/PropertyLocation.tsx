@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { MapPin, ExternalLink, StreetView } from 'lucide-react';
+import { MapPin, ExternalLink, Navigation } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-css.css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
 
 interface PropertyLocationProps {
@@ -32,14 +31,12 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     Number(latitude) !== 0 &&
     Number(longitude) !== 0;
 
-  // Initialize map when component mounts
   useEffect(() => {
     if (!hasValidCoordinates || !mapContainer.current || map.current) return;
 
     const lat = Number(latitude);
     const lng = Number(longitude);
 
-    // Initialize Mapbox with token
     mapboxgl.accessToken = 'pk.eyJ1IjoiMjRtc2NzMTAiLCJhIjoiY204MnhzajRxMWt2aTJycTh2ZHc0aWZldCJ9.DnpQkiPBocF3mh-5VM77KA';
     
     try {
@@ -52,10 +49,8 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
       
       map.current = initializedMap;
 
-      // Add navigation controls
       initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Add marker
       const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
         .setLngLat([lng, lat])
         .addTo(initializedMap);
@@ -66,7 +61,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
         setMapLoaded(true);
       });
 
-      // Clean up on unmount
       return () => {
         initializedMap.remove();
       };
@@ -76,7 +70,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
   }, [hasValidCoordinates, latitude, longitude]);
 
   const handleOpenGoogleMaps = () => {
-    // If we have coordinates, use them; otherwise, use the address
     const mapsUrl = hasValidCoordinates
       ? `https://www.google.com/maps?q=${latitude},${longitude}`
       : `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
@@ -87,7 +80,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
   const handleOpenStreetView = () => {
     if (!hasValidCoordinates) return;
     
-    // Google Street View URL format
     const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
     window.open(streetViewUrl, '_blank');
   };
@@ -114,7 +106,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
               size="sm"
               onClick={handleOpenStreetView}
             >
-              <StreetView className="mr-2 h-4 w-4" />
+              <Navigation className="mr-2 h-4 w-4" />
               Street View
             </Button>
           )}
@@ -145,7 +137,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
               className="shadow-md"
               onClick={handleOpenStreetView}
             >
-              <StreetView className="mr-2 h-4 w-4" />
+              <Navigation className="mr-2 h-4 w-4" />
               Street View
             </Button>
           </div>
