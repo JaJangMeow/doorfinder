@@ -3,10 +3,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
-import { User, Settings, Home, LogOut } from "lucide-react";
-import Button from "@/components/Button";
+import { User, Settings, Home, LogOut, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -96,19 +97,45 @@ const ProfilePage: React.FC = () => {
               </div>
               
               <div className="space-y-4">
-                <div className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center">
-                  <Home size={20} className="mr-3 text-primary" />
-                  <span>My Listings</span>
-                </div>
-                <div className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center">
-                  <Settings size={20} className="mr-3 text-primary" />
-                  <span>Account Settings</span>
-                </div>
                 <div 
-                  className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center"
+                  className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between"
+                  onClick={() => navigate('/my-listings')}
+                >
+                  <div className="flex items-center">
+                    <Home size={20} className="mr-3 text-primary" />
+                    <span>My Listings</span>
+                  </div>
+                  <ChevronRight size={18} className="text-muted-foreground" />
+                </div>
+                
+                <div 
+                  className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between"
+                  onClick={() => navigate('/saved')}
+                >
+                  <div className="flex items-center">
+                    <User size={20} className="mr-3 text-primary" />
+                    <span>Saved Properties</span>
+                  </div>
+                  <ChevronRight size={18} className="text-muted-foreground" />
+                </div>
+                
+                <div 
+                  className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <Settings size={20} className="mr-3 text-primary" />
+                    <span>Account Settings</span>
+                  </div>
+                  <ChevronRight size={18} className="text-muted-foreground" />
+                </div>
+                
+                <Separator className="my-4" />
+                
+                <div 
+                  className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer flex items-center text-destructive"
                   onClick={handleSignOut}
                 >
-                  <LogOut size={20} className="mr-3 text-primary" />
+                  <LogOut size={20} className="mr-3" />
                   <span>Sign Out</span>
                 </div>
               </div>

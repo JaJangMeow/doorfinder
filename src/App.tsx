@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import PostPropertyPage from "./pages/PostPropertyPage";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import MyListingsPage from "./pages/MyListingsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +115,11 @@ const App = () => {
             <Route path="/profile" element={
               <SemiProtectedRoute>
                 <ProfilePage />
+              </SemiProtectedRoute>
+            } />
+            <Route path="/my-listings" element={
+              <SemiProtectedRoute>
+                <MyListingsPage />
               </SemiProtectedRoute>
             } />
             

@@ -1,8 +1,11 @@
-import React from 'react';
-import { Building, Home, MapPin, Ruler, Bed, Bath, Calendar, User, Mail, Phone, Coffee, User2 } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { Building, Home, MapPin, Ruler, Bed, Bath, Calendar, User, Mail, Phone, Coffee, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import GoogleMap from './GoogleMap';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
 
 export interface PropertyDetailData {
   id: string;
@@ -23,7 +26,6 @@ export interface PropertyDetailData {
   hasHall?: boolean;
   hasSeparateKitchen?: boolean;
   nearbyCollege?: string;
-  // New properties
   propertyType?: 'rental' | 'pg';
   genderPreference?: 'boys' | 'girls' | 'any';
   floorNumber?: number;
@@ -33,9 +35,96 @@ export interface PropertyDetailData {
 
 const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setUserId(data.session.user.id);
+        // Check if this property is already saved by the user
+        if (property.id) {
+          const { data: savedData, error } = await supabase
+            .from('saved_properties')
+            .select('*')
+            .eq('user_id', data.session.user.id)
+            .eq('property_id', property.id)
+            .maybeSingle();
+          
+          if (savedData) {
+            setIsSaved(true);
+          }
+        }
+      }
+    };
+    
+    checkAuthentication();
+  }, [property.id]);
 
   const handleContactClick = () => {
     window.location.href = `mailto:${property.contactEmail}?subject=Inquiry about ${property.title}`;
+  };
+
+  const handleSaveProperty = async () => {
+    if (!userId) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save properties.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      if (isSaved) {
+        // Remove from saved properties
+        const { error } = await supabase
+          .from('saved_properties')
+          .delete()
+          .eq('user_id', userId)
+          .eq('property_id', property.id);
+          
+        if (error) throw error;
+        
+        setIsSaved(false);
+        toast({
+          title: "Property removed",
+          description: "Property has been removed from your saved list.",
+        });
+      } else {
+        // Add to saved properties
+        const { error } = await supabase
+          .from('saved_properties')
+          .insert({
+            user_id: userId,
+            property_id: property.id,
+            saved_at: new Date().toISOString(),
+          });
+          
+        if (error) throw error;
+        
+        setIsSaved(true);
+        toast({
+          title: "Property saved",
+          description: "Property has been added to your saved list.",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving/unsaving property:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update saved properties. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,6 +138,18 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
               alt={property.title}
               className="object-cover w-full h-full"
             />
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleSaveProperty}
+              disabled={isLoading}
+              className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white"
+            >
+              <Heart 
+                className={isSaved ? "fill-primary text-primary" : "text-muted-foreground"} 
+                size={20} 
+              />
+            </Button>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2">
             {property.images.slice(1, 4).map((image, index) => (
@@ -65,7 +166,21 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
 
         {/* Property Details */}
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{property.title}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-gray-900">{property.title}</h1>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSaveProperty}
+              disabled={isLoading}
+              className="sm:hidden"
+            >
+              <Heart 
+                className={isSaved ? "fill-primary text-primary" : "text-muted-foreground"} 
+                size={20} 
+              />
+            </Button>
+          </div>
           <div className="flex items-center text-gray-600 mt-2">
             <MapPin className="mr-2 h-5 w-5" />
             {property.address}
@@ -79,6 +194,12 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
                 {new Date(property.availableFrom).toLocaleDateString()}
               </span>
             </div>
+
+            {property.depositAmount && (
+              <div className="mt-2 text-gray-700">
+                <span className="font-medium">Security Deposit:</span> ₹{property.depositAmount}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="flex items-center text-gray-700">
