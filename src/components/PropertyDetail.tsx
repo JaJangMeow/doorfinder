@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Building, Home, MapPin, Ruler, Bed, Bath, Calendar, User, Mail, Phone, Coffee, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -126,13 +127,21 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const hasValidCoordinates = 
     property.latitude !== undefined && 
     property.longitude !== undefined && 
-    !isNaN(property.latitude) && 
-    !isNaN(property.longitude);
+    !isNaN(Number(property.latitude)) && 
+    !isNaN(Number(property.longitude)) &&
+    Number(property.latitude) !== 0 &&
+    Number(property.longitude) !== 0;
 
-  console.log('Property coordinates:', { 
-    latitude: property.latitude, 
-    longitude: property.longitude,
-    hasValidCoordinates
+  // Ensure coordinates are numbers
+  const latitude = hasValidCoordinates ? Number(property.latitude) : 0;
+  const longitude = hasValidCoordinates ? Number(property.longitude) : 0;
+
+  console.log('PropertyDetail - Coordinates check:', { 
+    originalLatitude: property.latitude,
+    originalLongitude: property.longitude,
+    parsedLatitude: latitude,
+    parsedLongitude: longitude,
+    hasValidCoordinates 
   });
 
   return (
@@ -278,14 +287,21 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900">Location</h2>
           <div className="mt-2 rounded-xl overflow-hidden">
-            <GoogleMap latitude={property.latitude!} longitude={property.longitude!} />
+            <GoogleMap latitude={latitude} longitude={longitude} />
           </div>
         </div>
       ) : (
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900">Location</h2>
           <div className="mt-2 rounded-xl overflow-hidden bg-muted h-[400px] flex items-center justify-center">
-            <p className="text-muted-foreground">Location information not available</p>
+            <div className="text-center p-4">
+              <p className="text-muted-foreground mb-4">Location information not available</p>
+              <Button 
+                onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(property.address)}`, '_blank')}
+              >
+                Search Address in Google Maps
+              </Button>
+            </div>
           </div>
         </div>
       )}

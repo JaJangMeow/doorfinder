@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +17,7 @@ const PropertyDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
-  console.log('Property data loaded:', property);
+  console.log('PropertyDetailPage - Property data loaded:', property);
 
   // Show error toast if needed
   React.useEffect(() => {
@@ -75,20 +74,33 @@ const PropertyDetailPage: React.FC = () => {
     );
   }
 
-  // Ensure coordinates are numbers
-  if (property.latitude && typeof property.latitude === 'string') {
-    property.latitude = parseFloat(property.latitude);
-  }
-  
-  if (property.longitude && typeof property.longitude === 'string') {
-    property.longitude = parseFloat(property.longitude);
-  }
+  // Ensure coordinates are valid numbers
+  const processedProperty = {
+    ...property,
+    latitude: property.latitude && typeof property.latitude !== 'undefined' ? 
+      Number(property.latitude) : undefined,
+    longitude: property.longitude && typeof property.longitude !== 'undefined' ? 
+      Number(property.longitude) : undefined
+  };
+
+  // Check if coordinates are valid for debug purposes
+  const hasValidCoordinates = 
+    processedProperty.latitude !== undefined && 
+    processedProperty.longitude !== undefined && 
+    !isNaN(processedProperty.latitude) && 
+    !isNaN(processedProperty.longitude);
+
+  console.log('PropertyDetailPage - Property coordinates:', { 
+    latitude: processedProperty.latitude, 
+    longitude: processedProperty.longitude,
+    hasValidCoordinates
+  });
 
   return (
     <div className="min-h-screen pb-16">
       <Navbar />
       <div className="pt-24 pb-16 container mx-auto px-4">
-        <PropertyDetailComponent property={property} />
+        <PropertyDetailComponent property={processedProperty} />
       </div>
       <TabBar />
     </div>
