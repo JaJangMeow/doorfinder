@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { MapPin, ExternalLink, Navigation } from 'lucide-react';
+import { MapPin, ExternalLink } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
@@ -44,12 +44,14 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [lng, lat],
-        zoom: 15
+        zoom: 15,
+        pitch: 45
       });
       
       map.current = initializedMap;
 
       initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      initializedMap.addControl(new mapboxgl.StreetViewControl(), 'top-right');
 
       const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
         .setLngLat([lng, lat])
@@ -77,13 +79,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     window.open(mapsUrl, '_blank');
   };
 
-  const handleOpenStreetView = () => {
-    if (!hasValidCoordinates) return;
-    
-    const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
-    window.open(streetViewUrl, '_blank');
-  };
-
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
@@ -100,16 +95,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
             <ExternalLink className="mr-2 h-4 w-4" />
             Open in Google Maps
           </Button>
-          {hasValidCoordinates && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleOpenStreetView}
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              Street View
-            </Button>
-          )}
         </div>
       </div>
       
@@ -121,7 +106,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           )}
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          <div className="absolute bottom-4 right-4">
             <Button 
               size="sm"
               variant="secondary"
@@ -130,15 +115,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               Google Maps
-            </Button>
-            <Button 
-              size="sm"
-              variant="secondary"
-              className="shadow-md"
-              onClick={handleOpenStreetView}
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              Street View
             </Button>
           </div>
         </div>
