@@ -6,73 +6,84 @@ interface GoogleMapProps {
   longitude: number;
 }
 
+declare global {
+  interface Window {
+    google: any;
+    initMap: () => void;
+  }
+}
+
 const GoogleMap: React.FC<GoogleMapProps> = ({ latitude, longitude }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [scriptLoading, setScriptLoading] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current) return;
-    if (!latitude || !longitude) {
+    if (!mapRef.current || !latitude || !longitude) {
       setMapError(true);
       return;
     }
+
+    // Create a global callback function for the Google Maps script
+    window.initMap = () => {
+      try {
+        if (!mapRef.current) return;
+        
+        // Initialize the map
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: { lat: latitude, lng: longitude },
+          zoom: 15,
+          mapTypeControl: true,
+          fullscreenControl: true,
+          streetViewControl: true,
+          zoomControl: true,
+        });
+
+        // Add a marker
+        new window.google.maps.Marker({
+          position: { lat: latitude, lng: longitude },
+          map: map,
+          title: 'Property Location',
+          animation: window.google.maps.Animation.DROP,
+        });
+
+        setMapLoaded(true);
+        setMapError(false);
+      } catch (error) {
+        console.error('Error initializing Google Map:', error);
+        setMapError(true);
+      }
+    };
 
     // Check if Google Maps API is already loaded
     if (window.google && window.google.maps) {
-      initializeMap();
+      window.initMap();
       return;
-    } else if (!scriptLoading) {
-      // Load the Google Maps script if not already loading
-      setScriptLoading(true);
-      
-      // Wait for the script to load and then initialize the map
-      const checkGoogleMapsLoaded = setInterval(() => {
-        if (window.google && window.google.maps) {
-          clearInterval(checkGoogleMapsLoaded);
-          initializeMap();
-        }
-      }, 100);
-      
-      // Set a timeout to prevent infinite checking
-      setTimeout(() => {
-        clearInterval(checkGoogleMapsLoaded);
-        if (!mapLoaded) {
-          setMapError(true);
-        }
-      }, 10000); // 10 second timeout
     }
-  }, [latitude, longitude, scriptLoading]);
 
-  const initializeMap = () => {
-    if (!mapRef.current) return;
-    
-    try {
-      // Initialize the map
-      const map = new window.google.maps.Map(mapRef.current, {
-        center: { lat: latitude, lng: longitude },
-        zoom: 15,
-        mapTypeControl: true,
-        fullscreenControl: true,
-        streetViewControl: true,
-        zoomControl: true,
-      });
-
-      // Add a marker
-      new window.google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: map,
-        title: 'Property Location',
-        animation: window.google.maps.Animation.DROP,
-      });
-
-      setMapLoaded(true);
-    } catch (error) {
-      console.error('Error initializing Google Map:', error);
+    // Load the Google Maps script with the callback
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyCqG_rXoFfwIRg8eoCV_joDHYk8ZrkpOsg'}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      console.error('Google Maps script failed to load');
       setMapError(true);
-    }
-  };
+    };
+    
+    document.head.appendChild(script);
+
+    return () => {
+      // Clean up
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      // Remove the global callback
+      if (window.initMap) {
+        delete window.initMap;
+      }
+    };
+  }, [latitude, longitude]);
 
   if (mapError) {
     return (

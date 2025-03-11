@@ -7,7 +7,6 @@ import { getPropertyById } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
 import TabBar from "@/components/TabBar";
 import Navbar from "@/components/Navbar";
-import { GOOGLE_MAPS_API_KEY } from "@/lib/supabase";
 
 // Define a global interface to make TypeScript aware of the google property
 declare global {
@@ -25,33 +24,6 @@ const PropertyDetailPage: React.FC = () => {
     queryFn: () => id ? getPropertyById(id) : null,
     enabled: !!id,
   });
-
-  // Load Google Maps script
-  React.useEffect(() => {
-    // If Google Maps is already loaded, don't load it again
-    if (window.google) {
-      return;
-    }
-    
-    // Only load if we have property coordinates
-    if (property?.latitude && property?.longitude) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      
-      // Add script to the document
-      document.head.appendChild(script);
-      
-      // Clean up function to remove the script when the component unmounts
-      return () => {
-        // Make sure the script still exists before trying to remove it
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      };
-    }
-  }, [property]);
 
   // Show error toast if needed
   React.useEffect(() => {
