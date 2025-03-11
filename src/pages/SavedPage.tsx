@@ -54,24 +54,29 @@ const SavedPage: React.FC = () => {
       }
       
       // Transform the data to match PropertyData interface
+      // Using a proper type check to ensure properties exist
       const propertyData: PropertyData[] = savedData
         .filter(item => item.properties) // Filter out null properties
-        .map(item => ({
-          id: item.properties.id,
-          title: item.properties.title,
-          address: item.properties.address,
-          price: item.properties.price,
-          bedrooms: item.properties.bedrooms,
-          bathrooms: item.properties.bathrooms || 1,
-          availableFrom: item.properties.available_from,
-          imageUrl: item.properties.images && item.properties.images.length > 0 
-            ? item.properties.images[0] 
-            : 'https://via.placeholder.com/640x360',
-          latitude: item.properties.latitude,
-          longitude: item.properties.longitude,
-          hasHall: item.properties.has_hall,
-          hasSeparateKitchen: item.properties.has_separate_kitchen
-        }));
+        .map(item => {
+          // Access properties safely by correctly typing the item
+          const property = item.properties as any;
+          return {
+            id: property.id,
+            title: property.title,
+            address: property.address,
+            price: property.price,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms || 1,
+            availableFrom: property.available_from,
+            imageUrl: property.images && property.images.length > 0 
+              ? property.images[0] 
+              : 'https://via.placeholder.com/640x360',
+            latitude: property.latitude,
+            longitude: property.longitude,
+            hasHall: property.has_hall,
+            hasSeparateKitchen: property.has_separate_kitchen
+          };
+        });
       
       setSavedProperties(propertyData);
     } catch (error) {
