@@ -3,20 +3,18 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import SearchBar from "@/components/SearchBar";
-import FilterSortPanel from "@/components/FilterSortPanel";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BookOpen, School, Filter, MapPin } from "lucide-react";
+import { Search, BookOpen, MapPin } from "lucide-react";
 import { searchPropertiesByCollege, PropertyFilter, SortOption } from "@/services/propertyService";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Filter } from "lucide-react";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,9 +30,10 @@ const SearchPage: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [minBedrooms, setMinBedrooms] = useState<number | undefined>(undefined);
   const [maxBedrooms, setMaxBedrooms] = useState<number | undefined>(undefined);
-  const [availableDate, setAvailableDate] = useState<Date | undefined>(undefined);
   const [maxDistance, setMaxDistance] = useState<number | undefined>(undefined);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | undefined>(undefined);
+  const [hasHall, setHasHall] = useState<boolean | undefined>(undefined);
+  const [hasSeparateKitchen, setHasSeparateKitchen] = useState<boolean | undefined>(undefined);
 
   // Initial load of properties
   useEffect(() => {
@@ -117,7 +116,9 @@ const SearchPage: React.FC = () => {
     if (maxPrice) newFilters.maxPrice = maxPrice;
     if (minBedrooms) newFilters.minBedrooms = minBedrooms;
     if (maxBedrooms) newFilters.maxBedrooms = maxBedrooms;
-    if (availableDate) newFilters.availableFrom = format(availableDate, 'yyyy-MM-dd');
+    if (hasHall !== undefined) newFilters.hasHall = hasHall;
+    if (hasSeparateKitchen !== undefined) newFilters.hasSeparateKitchen = hasSeparateKitchen;
+    
     if (maxDistance && userLocation) {
       newFilters.maxDistance = maxDistance;
       newFilters.nearLocation = userLocation;
@@ -132,8 +133,9 @@ const SearchPage: React.FC = () => {
     setMaxPrice(undefined);
     setMinBedrooms(undefined);
     setMaxBedrooms(undefined);
-    setAvailableDate(undefined);
     setMaxDistance(undefined);
+    setHasHall(undefined);
+    setHasSeparateKitchen(undefined);
     setFilters({});
     setIsFilterOpen(false);
   };
@@ -150,7 +152,7 @@ const SearchPage: React.FC = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center mb-6">
-            <School className="text-primary mr-3" size={28} />
+            <Search className="text-primary mr-3" size={28} />
             <h1 className="text-3xl font-bold">Find Student Housing</h1>
           </div>
           
@@ -219,29 +221,25 @@ const SearchPage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Available From</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !availableDate && "text-muted-foreground"
-                          )}
-                        >
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {availableDate ? format(availableDate, "PPP") : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={availableDate}
-                          onSelect={setAvailableDate}
-                          initialFocus
+                    <Label>Amenities</Label>
+                    <div className="space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="hasHall"
+                          checked={hasHall === true}
+                          onCheckedChange={(checked) => setHasHall(checked === true ? true : undefined)}
                         />
-                      </PopoverContent>
-                    </Popover>
+                        <Label htmlFor="hasHall">Has Hall</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="hasSeparateKitchen"
+                          checked={hasSeparateKitchen === true}
+                          onCheckedChange={(checked) => setHasSeparateKitchen(checked === true ? true : undefined)}
+                        />
+                        <Label htmlFor="hasSeparateKitchen">Separate Kitchen</Label>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">

@@ -48,10 +48,9 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
     maxBedrooms: undefined,
     minBathrooms: undefined,
     maxBathrooms: undefined,
-    availableFrom: undefined,
-    college: undefined,
     hasHall: undefined,
-    hasSeparateKitchen: undefined
+    hasSeparateKitchen: undefined,
+    college: undefined
   });
   
   const [sortOption, setSortOption] = useState<SortOption>('newest');
@@ -62,14 +61,6 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
     setFilters(prev => ({
       ...prev,
       [name]: value === '' ? undefined : Number(value)
-    }));
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value === '' ? undefined : value
     }));
   };
 
@@ -106,10 +97,9 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
       maxBedrooms: undefined,
       minBathrooms: undefined,
       maxBathrooms: undefined,
-      availableFrom: undefined,
-      college: undefined,
       hasHall: undefined,
-      hasSeparateKitchen: undefined
+      hasSeparateKitchen: undefined,
+      college: undefined
     });
     onApplyFilters({});
   };
@@ -311,36 +301,6 @@ const FilterSortPanel: React.FC<FilterSortPanelProps> = ({
           </SelectContent>
         </Select>
       </div>
-
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
-            <School size={16} />
-            <span>Colleges</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-0">
-          <Command>
-            <CommandInput placeholder="Search college..." />
-            <CommandList className="max-h-60">
-              <CommandEmpty>No college found.</CommandEmpty>
-              <CommandGroup heading="Colleges in Bangalore">
-                {BANGALORE_COLLEGES.map((college) => (
-                  <CommandItem
-                    key={college}
-                    onSelect={() => {
-                      setFilters(prev => ({ ...prev, college }));
-                      onApplyFilters({ ...filters, college });
-                    }}
-                  >
-                    {college}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
     </div>
   );
 };

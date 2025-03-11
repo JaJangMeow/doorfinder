@@ -57,20 +57,20 @@ const SavedPage: React.FC = () => {
       const propertyData: PropertyData[] = savedData
         .filter(item => item.properties) // Filter out null properties
         .map(item => ({
-          id: item.properties.id,
-          title: item.properties.title,
-          address: item.properties.address,
-          price: item.properties.price,
-          bedrooms: item.properties.bedrooms,
-          bathrooms: item.properties.bathrooms || 1,
-          availableFrom: item.properties.available_from,
-          imageUrl: item.properties.images && item.properties.images.length > 0 
-            ? item.properties.images[0] 
+          id: item.properties!.id,
+          title: item.properties!.title,
+          address: item.properties!.address,
+          price: item.properties!.price,
+          bedrooms: item.properties!.bedrooms,
+          bathrooms: item.properties!.bathrooms || 1,
+          availableFrom: item.properties!.available_from,
+          imageUrl: item.properties!.images && item.properties!.images.length > 0 
+            ? item.properties!.images[0] 
             : 'https://via.placeholder.com/640x360',
-          latitude: item.properties.latitude,
-          longitude: item.properties.longitude,
-          hasHall: item.properties.has_hall,
-          hasSeparateKitchen: item.properties.has_separate_kitchen
+          latitude: item.properties!.latitude,
+          longitude: item.properties!.longitude,
+          hasHall: item.properties!.has_hall,
+          hasSeparateKitchen: item.properties!.has_separate_kitchen
         }));
       
       setSavedProperties(propertyData);
