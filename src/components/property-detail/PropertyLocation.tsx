@@ -3,7 +3,9 @@ import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { MapPin, ExternalLink } from 'lucide-react';
-import GoogleMap from '@/components/GoogleMap';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useRef, useState } from 'react';
 
 interface PropertyLocationProps {
   latitude?: number;
@@ -17,6 +19,10 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
   address
 }) => {
   const { toast } = useToast();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   
   const hasValidCoordinates = 
     latitude !== undefined && 
@@ -25,6 +31,49 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     !isNaN(Number(longitude)) &&
     Number(latitude) !== 0 &&
     Number(longitude) !== 0;
+
+  // Initialize map when component mounts
+  useEffect(() => {
+    if (!hasValidCoordinates || !mapContainer.current || map.current) return;
+
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    // Initialize Mapbox with token
+    mapboxgl.accessToken = 'pk.eyJ1IjoiMjRtc2NzMTAiLCJhIjoiY204MnhzajRxMWt2aTJycTh2ZHc0aWZldCJ9.DnpQkiPBocF3mh-5VM77KA';
+    
+    try {
+      const initializedMap = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [lng, lat],
+        zoom: 15
+      });
+      
+      map.current = initializedMap;
+
+      // Add navigation controls
+      initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Add marker
+      const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
+        .setLngLat([lng, lat])
+        .addTo(initializedMap);
+      
+      marker.current = initialMarker;
+
+      initializedMap.on('load', () => {
+        setMapLoaded(true);
+      });
+
+      // Clean up on unmount
+      return () => {
+        initializedMap.remove();
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
+  }, [hasValidCoordinates, latitude, longitude]);
 
   const handleOpenGoogleMaps = () => {
     // If we have coordinates, use them; otherwise, use the address
@@ -78,8 +127,21 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
       </div>
       
       {hasValidCoordinates ? (
-        <div className="rounded-xl overflow-hidden">
-          <GoogleMap latitude={Number(latitude)} longitude={Number(longitude)} />
+        <div className="rounded-xl overflow-hidden h-[400px] relative">
+          <div ref={mapContainer} className="w-full h-full rounded-lg" />
+          {!mapLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            </div>
+          )}
+          <Button 
+            size="sm"
+            variant="secondary"
+            className="absolute bottom-4 right-4 shadow-md"
+            onClick={handleOpenGoogleMaps}
+          >
+            Open in Google Maps
+          </Button>
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden bg-muted h-[400px] flex items-center justify-center">
