@@ -2,9 +2,9 @@
 import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { MapPin, ExternalLink } from 'lucide-react';
+import { MapPin, ExternalLink, StreetView } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import 'mapbox-gl/dist/mapbox-css.css';
 import { useEffect, useRef, useState } from 'react';
 
 interface PropertyLocationProps {
@@ -54,9 +54,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
 
       // Add navigation controls
       initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Add street view control
-      initializedMap.addControl(new mapboxgl.StreetViewControl(), 'bottom-right');
 
       // Add marker
       const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
@@ -87,6 +84,14 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     window.open(mapsUrl, '_blank');
   };
 
+  const handleOpenStreetView = () => {
+    if (!hasValidCoordinates) return;
+    
+    // Google Street View URL format
+    const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
+    window.open(streetViewUrl, '_blank');
+  };
+
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
@@ -94,7 +99,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
           <MapPin className="mr-2 text-primary" size={20} />
           Location
         </h2>
-        <div>
+        <div className="flex gap-2">
           <Button 
             variant="default" 
             size="sm"
@@ -103,6 +108,16 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
             <ExternalLink className="mr-2 h-4 w-4" />
             Open in Google Maps
           </Button>
+          {hasValidCoordinates && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleOpenStreetView}
+            >
+              <StreetView className="mr-2 h-4 w-4" />
+              Street View
+            </Button>
+          )}
         </div>
       </div>
       
@@ -114,14 +129,26 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           )}
-          <Button 
-            size="sm"
-            variant="secondary"
-            className="absolute bottom-4 right-4 shadow-md"
-            onClick={handleOpenGoogleMaps}
-          >
-            Open in Google Maps
-          </Button>
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <Button 
+              size="sm"
+              variant="secondary"
+              className="shadow-md"
+              onClick={handleOpenGoogleMaps}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Google Maps
+            </Button>
+            <Button 
+              size="sm"
+              variant="secondary"
+              className="shadow-md"
+              onClick={handleOpenStreetView}
+            >
+              <StreetView className="mr-2 h-4 w-4" />
+              Street View
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden bg-muted h-[400px] flex items-center justify-center">
