@@ -74,5 +74,13 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
     }
   }, [scriptLoaded, mapInitialized, latitude, longitude]);
 
-  return { mapRef, mapLoaded, mapError, setMapError, setMapLoaded, setMapInitialized };
+  return { 
+    mapRef, 
+    mapLoaded, 
+    mapError, 
+    setMapError, 
+    setMapLoaded, 
+    setMapInitialized,
+    initializeMap 
+  };
 };

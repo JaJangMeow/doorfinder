@@ -26,7 +26,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ latitude, longitude }) => {
     mapError, 
     setMapError, 
     setMapLoaded, 
-    setMapInitialized 
+    setMapInitialized,
+    initializeMap 
   } = useGoogleMap({ 
     latitude, 
     longitude, 
