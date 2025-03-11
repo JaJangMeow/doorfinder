@@ -4,7 +4,7 @@ import TabBar from "@/components/TabBar";
 import SearchBar from "@/components/SearchBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BookOpen, MapPin, Building, Bath, School, Info, HelpCircle, Phone, X, Check } from "lucide-react";
+import { Search, BookOpen, MapPin, Building, Bath, School, Info, HelpCircle, Phone, X, Check, Filter } from "lucide-react";
 import { searchPropertiesByCollege, PropertyFilter, SortOption, BANGALORE_COLLEGES } from "@/services/propertyService";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Filter, Info, HelpCircle, Phone } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   Dialog,
@@ -57,6 +56,44 @@ const SearchPage: React.FC = () => {
   const [howItWorksDialogOpen, setHowItWorksDialogOpen] = useState(false);
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+
+  // Function to get user's location
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          
+          // Enable distance filter with default value when location is set
+          if (!maxDistance) {
+            setMaxDistance(10);
+          }
+          
+          toast({
+            title: "Location Set",
+            description: "Your current location has been set for distance filtering.",
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            title: "Location Error",
+            description: "Unable to get your location. Please check your browser permissions.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Not Supported",
+        description: "Geolocation is not supported by your browser.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Initial load of properties
   useEffect(() => {
@@ -582,3 +619,4 @@ const SearchPage: React.FC = () => {
 };
 
 export default SearchPage;
+
