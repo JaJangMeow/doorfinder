@@ -54,6 +54,9 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
 
       // Add navigation controls
       initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
+      // Add street view control
+      initializedMap.addControl(new mapboxgl.StreetViewControl(), 'bottom-right');
 
       // Add marker
       const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
@@ -84,22 +87,6 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     window.open(mapsUrl, '_blank');
   };
 
-  const handleCopyLocation = () => {
-    if (hasValidCoordinates) {
-      navigator.clipboard.writeText(`${latitude},${longitude}`);
-      toast({
-        title: "Coordinates copied",
-        description: "Location coordinates have been copied to clipboard.",
-      });
-    } else {
-      navigator.clipboard.writeText(address);
-      toast({
-        title: "Address copied",
-        description: "Property address has been copied to clipboard.",
-      });
-    }
-  };
-
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
@@ -107,14 +94,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
           <MapPin className="mr-2 text-primary" size={20} />
           Location
         </h2>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleCopyLocation}
-          >
-            Copy Location
-          </Button>
+        <div>
           <Button 
             variant="default" 
             size="sm"

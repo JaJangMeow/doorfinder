@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -165,13 +166,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
             description={property.description}
             restrictions={property.restrictions}
           />
-          
-          <ContactInformation 
-            contactName={property.contactName}
-            contactEmail={property.contactEmail}
-            contactPhone={property.contactPhone}
-            onContactClick={handleContactClick}
-          />
         </div>
       </div>
 
@@ -179,6 +173,13 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
         latitude={property.latitude}
         longitude={property.longitude}
         address={property.address}
+      />
+
+      <ContactInformation 
+        contactName={property.contactName}
+        contactEmail={property.contactEmail}
+        contactPhone={property.contactPhone}
+        onContactClick={handleContactClick}
       />
 
       <div className="mt-8">
