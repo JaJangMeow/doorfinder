@@ -47,7 +47,7 @@ const SavedPage: React.FC = () => {
       
       if (savedError) throw savedError;
       
-      if (!savedData) {
+      if (!savedData || savedData.length === 0) {
         setSavedProperties([]);
         setIsLoading(false);
         return;
