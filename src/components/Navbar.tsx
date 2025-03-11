@@ -95,19 +95,7 @@ const Navbar: React.FC = () => {
           )}
         </button>
         
-        {/* Empty space to balance the layout */}
-        <div className="hidden md:block"></div>
-
-        {/* Logo moved to right */}
-        <Link
-          to={isAuthenticated ? "/home" : "/"}
-          className="flex items-center text-xl font-semibold text-foreground"
-        >
-          <span className="text-primary font-bold">Door</span>
-          <span>Finder</span>
-        </Link>
-
-        {/* Auth Buttons - Desktop (Profile only) */}
+        {/* Auth Buttons - Desktop (Profile on left) */}
         <div className="hidden md:flex items-center">
           {isAuthenticated ? (
             <Link to="/profile">
@@ -131,6 +119,15 @@ const Navbar: React.FC = () => {
             </Link>
           )}
         </div>
+
+        {/* Logo moved to right (non-clickable) */}
+        <div className="text-xl font-semibold text-foreground">
+          <span className="text-primary font-bold">Door</span>
+          <span>Finder</span>
+        </div>
+
+        {/* Empty space to balance the layout */}
+        <div className="hidden md:block"></div>
 
         {/* Mobile Menu */}
         <div

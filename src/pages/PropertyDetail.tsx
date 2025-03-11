@@ -28,17 +28,27 @@ const PropertyDetailPage: React.FC = () => {
 
   // Load Google Maps script
   React.useEffect(() => {
-    // Check if Google Maps script is already loaded
-    if (typeof window.google === 'undefined' && property?.latitude && property?.longitude) {
+    // If Google Maps is already loaded, don't load it again
+    if (window.google) {
+      return;
+    }
+    
+    // Only load if we have property coordinates
+    if (property?.latitude && property?.longitude) {
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
       script.async = true;
       script.defer = true;
+      
+      // Add script to the document
       document.head.appendChild(script);
       
+      // Clean up function to remove the script when the component unmounts
       return () => {
-        // Clean up the script when the component unmounts
-        document.head.removeChild(script);
+        // Make sure the script still exists before trying to remove it
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
       };
     }
   }, [property]);
