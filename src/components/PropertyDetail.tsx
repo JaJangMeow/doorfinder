@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Building, Home, MapPin, Ruler, Bed, Bath, Calendar, User, Mail, Phone, Coffee, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,7 +44,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         setUserId(data.session.user.id);
-        // Check if this property is already saved by the user
         if (property.id) {
           const { data: savedData, error } = await supabase
             .from('saved_properties')
@@ -83,7 +81,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
     
     try {
       if (isSaved) {
-        // Remove from saved properties
         const { error } = await supabase
           .from('saved_properties')
           .delete()
@@ -98,7 +95,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
           description: "Property has been removed from your saved list.",
         });
       } else {
-        // Add to saved properties
         const { error } = await supabase
           .from('saved_properties')
           .insert({
@@ -127,10 +123,21 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
     }
   };
 
+  const hasValidCoordinates = 
+    property.latitude !== undefined && 
+    property.longitude !== undefined && 
+    !isNaN(property.latitude) && 
+    !isNaN(property.longitude);
+
+  console.log('Property coordinates:', { 
+    latitude: property.latitude, 
+    longitude: property.longitude,
+    hasValidCoordinates
+  });
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Image Gallery */}
         <div>
           <div className="relative h-96 rounded-xl overflow-hidden">
             <img
@@ -164,7 +171,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
           </div>
         </div>
 
-        {/* Property Details */}
         <div>
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-900">{property.title}</h1>
@@ -268,12 +274,18 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
         </div>
       </div>
 
-      {/* Google Map */}
-      {property.latitude && property.longitude && (
+      {hasValidCoordinates ? (
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900">Location</h2>
           <div className="mt-2 rounded-xl overflow-hidden">
-            <GoogleMap latitude={property.latitude} longitude={property.longitude} />
+            <GoogleMap latitude={property.latitude!} longitude={property.longitude!} />
+          </div>
+        </div>
+      ) : (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900">Location</h2>
+          <div className="mt-2 rounded-xl overflow-hidden bg-muted h-[400px] flex items-center justify-center">
+            <p className="text-muted-foreground">Location information not available</p>
           </div>
         </div>
       )}

@@ -8,13 +8,6 @@ import { useToast } from "@/components/ui/use-toast";
 import TabBar from "@/components/TabBar";
 import Navbar from "@/components/Navbar";
 
-// Define a global interface to make TypeScript aware of the google property
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
 const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -25,9 +18,12 @@ const PropertyDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
+  console.log('Property data loaded:', property);
+
   // Show error toast if needed
   React.useEffect(() => {
     if (error) {
+      console.error('Error loading property:', error);
       toast({
         title: "Error",
         description: "Failed to load property details. Please try again later.",
@@ -77,6 +73,15 @@ const PropertyDetailPage: React.FC = () => {
         <TabBar />
       </div>
     );
+  }
+
+  // Ensure coordinates are numbers
+  if (property.latitude && typeof property.latitude === 'string') {
+    property.latitude = parseFloat(property.latitude);
+  }
+  
+  if (property.longitude && typeof property.longitude === 'string') {
+    property.longitude = parseFloat(property.longitude);
   }
 
   return (
