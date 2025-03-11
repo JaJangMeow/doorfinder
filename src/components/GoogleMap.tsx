@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useGoogleMapsScript } from '@/hooks/useGoogleMapsScript';
 import { useGoogleMap } from '@/hooks/useGoogleMap';
@@ -32,6 +32,10 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ latitude, longitude }) => {
     longitude, 
     scriptLoaded 
   });
+
+  useEffect(() => {
+    console.log('GoogleMap component rendered with:', { latitude, longitude, scriptLoaded, mapLoaded, mapError });
+  }, [latitude, longitude, scriptLoaded, mapLoaded, mapError]);
 
   const handleTryAgain = () => {
     console.log('Trying again to load map');

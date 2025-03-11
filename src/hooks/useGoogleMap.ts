@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface UseGoogleMapProps {
   latitude: number;
@@ -12,21 +12,37 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const attemptRef = useRef(0);
 
-  const initializeMap = () => {
-    console.log('Attempting to initialize map...', { 
+  const initializeMap = useCallback(() => {
+    attemptRef.current += 1;
+    console.log(`Attempt #${attemptRef.current} to initialize map:`, { 
       mapRef: mapRef.current, 
       latitude, 
       longitude,
       scriptLoaded,
-      googleMapsAvailable: !!window.google?.maps
+      googleAvailable: !!window.google,
+      mapsAvailable: !!window.google?.maps
     });
 
-    if (!mapRef.current || !window.google?.maps) {
-      console.error('Map reference or Google Maps not available');
+    // Guard against missing dependencies
+    if (!mapRef.current) {
+      console.error('Map container reference is not available');
+      if (attemptRef.current > 5) {
+        setMapError(true);
+      }
       return;
     }
 
+    if (!window.google?.maps) {
+      console.error('Google Maps API is not available');
+      if (attemptRef.current > 5) {
+        setMapError(true);
+      }
+      return;
+    }
+
+    // Validate coordinates
     if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
       console.error('Invalid coordinates:', { latitude, longitude });
       setMapError(true);
@@ -34,7 +50,7 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
     }
 
     try {
-      console.log('Creating map with coordinates:', { latitude, longitude });
+      console.log('Creating Google Map with coordinates:', { latitude, longitude });
       
       const map = new window.google.maps.Map(mapRef.current, {
         center: { lat: latitude, lng: longitude },
@@ -60,14 +76,20 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
       console.error('Error initializing Google Map:', error);
       setMapError(true);
     }
-  };
+  }, [latitude, longitude, scriptLoaded]);
 
+  // Try to initialize the map whenever dependencies change
   useEffect(() => {
     if (scriptLoaded && !mapInitialized && mapRef.current && window.google?.maps) {
-      console.log('All conditions met, initializing map');
+      console.log('All conditions met, initializing map now');
       initializeMap();
     }
-  }, [scriptLoaded, mapInitialized, latitude, longitude]);
+  }, [scriptLoaded, mapInitialized, latitude, longitude, initializeMap]);
+
+  // Reset attempt counter when dependencies change
+  useEffect(() => {
+    attemptRef.current = 0;
+  }, [latitude, longitude]);
 
   return { 
     mapRef, 
