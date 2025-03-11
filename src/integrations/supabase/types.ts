@@ -52,6 +52,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           nearby_college: string | null
+          owner_id: string | null
           price: number
           property_type: string | null
           restrictions: string | null
@@ -79,6 +80,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nearby_college?: string | null
+          owner_id?: string | null
           price: number
           property_type?: string | null
           restrictions?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           nearby_college?: string | null
+          owner_id?: string | null
           price?: number
           property_type?: string | null
           restrictions?: string | null
@@ -113,6 +116,35 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      saved_properties: {
+        Row: {
+          id: string
+          property_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
