@@ -45,11 +45,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
+        // Validate file size (max 15MB)
+        if (file.size > 15 * 1024 * 1024) {
           toast({
             title: "File too large",
-            description: `${file.name} exceeds the 5MB size limit`,
+            description: `${file.name} exceeds the 15MB size limit`,
             variant: "destructive",
           });
           continue;
