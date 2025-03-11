@@ -8,6 +8,7 @@ import PropertyHeader from './PropertyHeader';
 import PropertyFeatures from './PropertyFeatures';
 import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
+import PropertyLocation from './PropertyLocation';
 
 export interface PropertyDetailData {
   id: string;
@@ -173,6 +174,12 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
           />
         </div>
       </div>
+
+      <PropertyLocation 
+        latitude={property.latitude}
+        longitude={property.longitude}
+        address={property.address}
+      />
 
       <div className="mt-8">
         <Button variant="outline" onClick={() => navigate(-1)}>
