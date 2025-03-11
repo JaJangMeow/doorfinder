@@ -40,7 +40,10 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          deposit_amount: number | null
           description: string | null
+          floor_number: number | null
+          gender_preference: string | null
           has_hall: boolean | null
           has_separate_kitchen: boolean | null
           id: string
@@ -50,6 +53,8 @@ export type Database = {
           longitude: number | null
           nearby_college: string | null
           price: number
+          property_type: string | null
+          restrictions: string | null
           square_feet: number | null
           title: string
         }
@@ -62,7 +67,10 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deposit_amount?: number | null
           description?: string | null
+          floor_number?: number | null
+          gender_preference?: string | null
           has_hall?: boolean | null
           has_separate_kitchen?: boolean | null
           id?: string
@@ -72,6 +80,8 @@ export type Database = {
           longitude?: number | null
           nearby_college?: string | null
           price: number
+          property_type?: string | null
+          restrictions?: string | null
           square_feet?: number | null
           title: string
         }
@@ -84,7 +94,10 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deposit_amount?: number | null
           description?: string | null
+          floor_number?: number | null
+          gender_preference?: string | null
           has_hall?: boolean | null
           has_separate_kitchen?: boolean | null
           id?: string
@@ -94,6 +107,8 @@ export type Database = {
           longitude?: number | null
           nearby_college?: string | null
           price?: number
+          property_type?: string | null
+          restrictions?: string | null
           square_feet?: number | null
           title?: string
         }
