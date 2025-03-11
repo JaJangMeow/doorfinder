@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import SearchBar from "@/components/SearchBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, BookOpen, MapPin } from "lucide-react";
-import { searchPropertiesByCollege, PropertyFilter, SortOption } from "@/services/propertyService";
+import { Search, BookOpen, MapPin, Building, Bath, School, Info, HelpCircle, Phone, X, Check } from "lucide-react";
+import { searchPropertiesByCollege, PropertyFilter, SortOption, BANGALORE_COLLEGES } from "@/services/propertyService";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
@@ -14,7 +13,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Filter } from "lucide-react";
+import { Filter, Info, HelpCircle, Phone } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,12 +43,20 @@ const SearchPage: React.FC = () => {
   // Detailed filter states
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
-  const [minBedrooms, setMinBedrooms] = useState<number | undefined>(undefined);
-  const [maxBedrooms, setMaxBedrooms] = useState<number | undefined>(undefined);
+  const [bedrooms, setBedrooms] = useState<number | string | undefined>(undefined);
+  const [bathrooms, setBathrooms] = useState<number | undefined>(undefined);
   const [maxDistance, setMaxDistance] = useState<number | undefined>(undefined);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | undefined>(undefined);
   const [hasHall, setHasHall] = useState<boolean | undefined>(undefined);
   const [hasSeparateKitchen, setHasSeparateKitchen] = useState<boolean | undefined>(undefined);
+  const [propertyType, setPropertyType] = useState<'rental' | 'pg' | undefined>(undefined);
+  const [selectedColleges, setSelectedColleges] = useState<string[]>([]);
+  
+  // Dialog states
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
+  const [howItWorksDialogOpen, setHowItWorksDialogOpen] = useState(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   // Initial load of properties
   useEffect(() => {
@@ -57,38 +80,6 @@ const SearchPage: React.FC = () => {
 
     fetchProperties();
   }, [toast, filters, sortOption]);
-
-  // Get user location for distance filtering
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-          toast({
-            title: "Location detected",
-            description: "Your location has been set for distance filtering.",
-          });
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          toast({
-            title: "Location error",
-            description: "Could not detect your location. Distance filtering will not be accurate.",
-            variant: "destructive",
-          });
-        }
-      );
-    } else {
-      toast({
-        title: "Geolocation not supported",
-        description: "Your browser does not support geolocation. Distance filtering will not be available.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
@@ -114,14 +105,35 @@ const SearchPage: React.FC = () => {
     
     if (minPrice) newFilters.minPrice = minPrice;
     if (maxPrice) newFilters.maxPrice = maxPrice;
-    if (minBedrooms) newFilters.minBedrooms = minBedrooms;
-    if (maxBedrooms) newFilters.maxBedrooms = maxBedrooms;
+    
+    // Handle bedrooms - including "<5" option
+    if (bedrooms !== undefined) {
+      if (bedrooms === "<5") {
+        newFilters.maxBedrooms = 5;
+      } else {
+        newFilters.minBedrooms = Number(bedrooms);
+        newFilters.maxBedrooms = Number(bedrooms);
+      }
+    }
+    
+    // Handle bathrooms
+    if (bathrooms !== undefined) {
+      newFilters.minBathrooms = bathrooms;
+      newFilters.maxBathrooms = bathrooms;
+    }
+    
     if (hasHall !== undefined) newFilters.hasHall = hasHall;
     if (hasSeparateKitchen !== undefined) newFilters.hasSeparateKitchen = hasSeparateKitchen;
+    if (propertyType) newFilters.propertyType = propertyType;
     
     if (maxDistance && userLocation) {
       newFilters.maxDistance = maxDistance;
       newFilters.nearLocation = userLocation;
+    }
+    
+    // Handle college selection
+    if (selectedColleges.length > 0) {
+      newFilters.college = selectedColleges.join(',');
     }
     
     setFilters(newFilters);
@@ -131,17 +143,38 @@ const SearchPage: React.FC = () => {
   const handleResetFilters = () => {
     setMinPrice(undefined);
     setMaxPrice(undefined);
-    setMinBedrooms(undefined);
-    setMaxBedrooms(undefined);
+    setBedrooms(undefined);
+    setBathrooms(undefined);
     setMaxDistance(undefined);
     setHasHall(undefined);
     setHasSeparateKitchen(undefined);
+    setPropertyType(undefined);
+    setSelectedColleges([]);
     setFilters({});
     setIsFilterOpen(false);
   };
 
   const handleSort = (option: SortOption) => {
     setSortOption(option);
+  };
+  
+  const handleCollegeSelect = (college: string) => {
+    setSelectedColleges((prev) => {
+      // If already selected, remove it
+      if (prev.includes(college)) {
+        return prev.filter(c => c !== college);
+      }
+      // If not selected and we have less than 3, add it
+      if (prev.length < 3) {
+        return [...prev, college];
+      }
+      // Otherwise, keep the same selection
+      return prev;
+    });
+  };
+  
+  const removeCollege = (college: string) => {
+    setSelectedColleges(prev => prev.filter(c => c !== college));
   };
 
   const activeFiltersCount = Object.keys(filters).length;
@@ -163,6 +196,104 @@ const SearchPage: React.FC = () => {
               className="w-full"
             />
           </div>
+          
+          {/* Information Links */}
+          <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Dialog open={aboutDialogOpen} onOpenChange={setAboutDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center justify-start">
+                  <Info size={16} className="mr-2" />
+                  <span className="text-sm">About Us</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>About Us</DialogTitle>
+                  <DialogDescription>
+                    We literally made this in a day for the Arcade Tank. Imagine what more we could do with this and what it could be! Imagine this being used by everyone—not just students—for searching new places. It would be so much simpler.
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={howItWorksDialogOpen} onOpenChange={setHowItWorksDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center justify-start">
+                  <Info size={16} className="mr-2" />
+                  <span className="text-sm">How It Works</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>How It Works</DialogTitle>
+                  <DialogDescription>
+                    DoorFinder helps students find housing near their colleges. Browse listings, filter by price and amenities, save favorites, and contact owners directly. Property owners can post their listings and manage inquiries.
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center justify-start">
+                  <HelpCircle size={16} className="mr-2" />
+                  <span className="text-sm">Help Center</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Help Center</DialogTitle>
+                  <DialogDescription>
+                    C'mon, it's super basic and so simple—help yourself hehe.
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center justify-start">
+                  <Phone size={16} className="mr-2" />
+                  <span className="text-sm">Contact Us</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Contact Us</DialogTitle>
+                  <DialogDescription>
+                    24mscs10@kristujayanti.com, joelkizyking@gmail.com, Instagram: mew_chew_
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          {/* Selected Colleges display */}
+          {selectedColleges.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {selectedColleges.map(college => (
+                <Badge key={college} variant="secondary" className="flex items-center gap-1">
+                  {college}
+                  <button 
+                    onClick={() => removeCollege(college)}
+                    className="ml-1 rounded-full hover:bg-muted p-0.5"
+                  >
+                    <X size={14} />
+                  </button>
+                </Badge>
+              ))}
+              {selectedColleges.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedColleges([])}
+                  className="h-7 text-xs"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+          )}
           
           {/* Advanced filtering and sorting UI */}
           <div className="mb-8 flex flex-wrap gap-3 items-center">
@@ -202,22 +333,126 @@ const SearchPage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
+                    <Label>Property Type</Label>
+                    <RadioGroup 
+                      value={propertyType} 
+                      onValueChange={(value: 'rental' | 'pg' | undefined) => setPropertyType(value)}
+                      className="flex flex-col space-y-1"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rental" id="rental" />
+                        <Label htmlFor="rental">Rental</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pg" id="pg" />
+                        <Label htmlFor="pg">PG</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
+                  <div className="space-y-2">
                     <Label>Bedrooms</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Min"
-                        value={minBedrooms || ''}
-                        onChange={(e) => setMinBedrooms(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                      <span>to</span>
-                      <Input
-                        type="number"
-                        placeholder="Max"
-                        value={maxBedrooms || ''}
-                        onChange={(e) => setMaxBedrooms(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </div>
+                    <RadioGroup 
+                      value={bedrooms?.toString()} 
+                      onValueChange={(value) => setBedrooms(value)}
+                      className="grid grid-cols-3 gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="1" id="bed-1" />
+                        <Label htmlFor="bed-1">1</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="2" id="bed-2" />
+                        <Label htmlFor="bed-2">2</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="3" id="bed-3" />
+                        <Label htmlFor="bed-3">3</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="4" id="bed-4" />
+                        <Label htmlFor="bed-4">4</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="<5" id="bed-5" />
+                        <Label htmlFor="bed-5">&lt;5</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Bathrooms</Label>
+                    <RadioGroup 
+                      value={bathrooms?.toString()} 
+                      onValueChange={(value) => setBathrooms(Number(value))}
+                      className="grid grid-cols-4 gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="1" id="bath-1" />
+                        <Label htmlFor="bath-1">1</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="2" id="bath-2" />
+                        <Label htmlFor="bath-2">2</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="3" id="bath-3" />
+                        <Label htmlFor="bath-3">3</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="4" id="bath-4" />
+                        <Label htmlFor="bath-4">4</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>College</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <Select
+                              value={selectedColleges.length > 0 ? "colleges" : undefined}
+                              onValueChange={(college) => {
+                                if (college !== "colleges") {
+                                  handleCollegeSelect(college);
+                                }
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select colleges (max 3)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {BANGALORE_COLLEGES.map((college) => (
+                                  <SelectItem 
+                                    key={college} 
+                                    value={college}
+                                    disabled={selectedColleges.length >= 3 && !selectedColleges.includes(college)}
+                                  >
+                                    <div className="flex items-center">
+                                      <School className="mr-2 h-4 w-4" />
+                                      <span>{college}</span>
+                                      {selectedColleges.includes(college) && (
+                                        <Check className="ml-2 h-4 w-4" />
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {selectedColleges.length >= 3 && (
+                              <div className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                                {selectedColleges.length}
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Select up to 3 colleges</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   
                   <div className="space-y-2">

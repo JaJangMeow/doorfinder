@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
@@ -59,6 +58,34 @@ export const getProperties = async (
       .select('*');
       
     if (filters) {
+      if (filters.college) {
+        const colleges = filters.college.split(',');
+        if (colleges.length === 1) {
+          query = query.ilike('nearby_college', `%${colleges[0]}%`);
+        } else if (colleges.length > 1) {
+          let collegeFilter = '';
+          colleges.forEach((college, index) => {
+            collegeFilter += `nearby_college.ilike.%${college}%`;
+            if (index < colleges.length - 1) {
+              collegeFilter += ',';
+            }
+          });
+          query = query.or(collegeFilter);
+        }
+      }
+      
+      if (filters.propertyType) {
+        query = query.eq('property_type', filters.propertyType);
+      }
+      
+      if (filters.hasHall !== undefined) {
+        query = query.eq('has_hall', filters.hasHall);
+      }
+
+      if (filters.hasSeparateKitchen !== undefined) {
+        query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
+      }
+      
       if (filters.minPrice) {
         query = query.gte('price', filters.minPrice);
       }
@@ -85,22 +112,6 @@ export const getProperties = async (
       
       if (filters.availableFrom) {
         query = query.gte('available_from', filters.availableFrom);
-      }
-      
-      if (filters.college) {
-        query = query.ilike('nearby_college', `%${filters.college}%`);
-      }
-
-      if (filters.hasHall !== undefined) {
-        query = query.eq('has_hall', filters.hasHall);
-      }
-
-      if (filters.hasSeparateKitchen !== undefined) {
-        query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
-      }
-      
-      if (filters.propertyType) {
-        query = query.eq('property_type', filters.propertyType);
       }
       
       if (filters.genderPreference) {
@@ -206,6 +217,10 @@ export const searchPropertiesByCollege = async (
   sortOption?: SortOption
 ): Promise<PropertyData[]> => {
   try {
+    if (filters?.college) {
+      return getProperties(filters, sortOption);
+    }
+    
     if (!collegeName.trim()) {
       return getProperties(filters, sortOption);
     }

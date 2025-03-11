@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
           )}
         </button>
         
-        {/* Auth Buttons - Desktop (Profile on left) */}
+        {/* Auth Buttons - Desktop only (Profile on left) */}
         <div className="hidden md:flex items-center">
           {isAuthenticated ? (
             <Link to="/profile">
@@ -120,7 +120,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Logo moved to right (non-clickable) */}
+        {/* Logo now centered on mobile */}
         <div className="text-xl font-semibold text-foreground">
           <span className="text-primary font-bold">Door</span>
           <span>Finder</span>
