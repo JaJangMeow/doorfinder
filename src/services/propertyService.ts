@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
@@ -19,6 +20,9 @@ export interface PropertyFilter {
   college?: string;
   hasHall?: boolean;
   hasSeparateKitchen?: boolean;
+  propertyType?: 'rental' | 'pg';
+  genderPreference?: 'boys' | 'girls' | 'any';
+  floorNumber?: number;
 }
 
 export type SortOption = 'price_asc' | 'price_desc' | 'bedrooms_desc' | 'newest' | 'oldest' | 'nearest';
@@ -94,6 +98,25 @@ export const getProperties = async (
       if (filters.hasSeparateKitchen !== undefined) {
         query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
       }
+      
+      if (filters.propertyType) {
+        query = query.eq('property_type', filters.propertyType);
+      }
+      
+      if (filters.genderPreference) {
+        if (filters.genderPreference === 'any') {
+          // If 'any' is selected, we want to show all properties including those 
+          // specifically for boys or girls and those with no preference
+          // No additional filter needed
+        } else {
+          // Show only properties for the specific gender or with no preference ('any')
+          query = query.or(`gender_preference.eq.${filters.genderPreference},gender_preference.eq.any`);
+        }
+      }
+      
+      if (filters.floorNumber !== undefined) {
+        query = query.eq('floor_number', filters.floorNumber);
+      }
     }
     
     if (sortOption) {
@@ -137,6 +160,10 @@ export const getProperties = async (
       longitude: item.longitude,
       hasHall: item.has_hall,
       hasSeparateKitchen: item.has_separate_kitchen,
+      propertyType: item.property_type || 'rental',
+      genderPreference: item.gender_preference || 'any',
+      floorNumber: item.floor_number || 0,
+      depositAmount: item.deposit_amount,
       distance: undefined // Initialize with undefined
     }));
     
@@ -224,6 +251,24 @@ export const searchPropertiesByCollege = async (
       if (filters.hasSeparateKitchen !== undefined) {
         query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
       }
+      
+      if (filters.propertyType) {
+        query = query.eq('property_type', filters.propertyType);
+      }
+      
+      if (filters.genderPreference) {
+        if (filters.genderPreference === 'any') {
+          // If 'any' is selected, we want to show all properties
+          // No additional filter needed
+        } else {
+          // Show only properties for the specific gender or with no preference ('any')
+          query = query.or(`gender_preference.eq.${filters.genderPreference},gender_preference.eq.any`);
+        }
+      }
+      
+      if (filters.floorNumber !== undefined) {
+        query = query.eq('floor_number', filters.floorNumber);
+      }
     }
     
     if (sortOption) {
@@ -267,6 +312,10 @@ export const searchPropertiesByCollege = async (
       longitude: item.longitude,
       hasHall: item.has_hall,
       hasSeparateKitchen: item.has_separate_kitchen,
+      propertyType: item.property_type || 'rental',
+      genderPreference: item.gender_preference || 'any',
+      floorNumber: item.floor_number || 0,
+      depositAmount: item.deposit_amount,
       distance: undefined // Initialize with undefined
     }));
     
@@ -332,7 +381,12 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       longitude: data.longitude,
       hasHall: data.has_hall,
       hasSeparateKitchen: data.has_separate_kitchen,
-      nearbyCollege: data.nearby_college || 'Not specified'
+      nearbyCollege: data.nearby_college || 'Not specified',
+      propertyType: data.property_type || 'rental',
+      genderPreference: data.gender_preference || 'any',
+      floorNumber: data.floor_number || 0,
+      depositAmount: data.deposit_amount,
+      restrictions: data.restrictions
     };
   } catch (error) {
     console.error('Error fetching property details:', error);

@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { 
   MapPin, Home, Calendar, User, 
   Mail, Phone, Upload, Image, 
-  Check, ArrowRight, Bath, Coffee
+  Check, ArrowRight, Bath, Coffee, Building, User2
 } from "lucide-react";
 import { 
   Select, 
@@ -51,6 +51,12 @@ const PostPropertyPage: React.FC = () => {
     contact_phone: "",
     has_hall: false,
     has_separate_kitchen: false,
+    // New fields
+    floor_number: "0",
+    property_type: "rental", // rental or pg
+    gender_preference: "any", // boys, girls, any
+    restrictions: "",
+    deposit_amount: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -98,6 +104,14 @@ const PostPropertyPage: React.FC = () => {
         toast({
           title: "Invalid price",
           description: "Please provide a valid price",
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (formData.deposit_amount && isNaN(parseFloat(formData.deposit_amount))) {
+        toast({
+          title: "Invalid deposit amount",
+          description: "Please provide a valid deposit amount",
           variant: "destructive",
         });
         return false;
@@ -191,6 +205,8 @@ const PostPropertyPage: React.FC = () => {
       const numericBedrooms = parseInt(formData.bedrooms);
       const numericBathrooms = parseInt(formData.bathrooms);
       const numericSquareFeet = parseInt(formData.square_feet);
+      const numericFloorNumber = parseInt(formData.floor_number);
+      const numericDepositAmount = formData.deposit_amount ? parseFloat(formData.deposit_amount) : null;
       
       console.log("Submitting property with coordinates:", coordinates);
       console.log("Uploading images:", images);
@@ -228,6 +244,12 @@ const PostPropertyPage: React.FC = () => {
             has_hall: formData.has_hall,
             has_separate_kitchen: formData.has_separate_kitchen,
             nearby_college: formData.nearby_college || "Not specified",
+            // New fields
+            floor_number: numericFloorNumber,
+            property_type: formData.property_type,
+            gender_preference: formData.gender_preference,
+            restrictions: formData.restrictions,
+            deposit_amount: numericDepositAmount,
           }
         ])
         .select();
@@ -306,17 +328,104 @@ const PostPropertyPage: React.FC = () => {
                 />
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="price">Monthly Rent (₹)</Label>
+                  <Input 
+                    id="price"
+                    name="price"
+                    type="number"
+                    placeholder="e.g., 15000"
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="deposit_amount">Security Deposit (₹)</Label>
+                  <Input 
+                    id="deposit_amount"
+                    name="deposit_amount"
+                    type="number"
+                    placeholder="e.g., 30000"
+                    value={formData.deposit_amount}
+                    onChange={handleChange}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
               <div>
-                <Label htmlFor="price">Monthly Rent (₹)</Label>
-                <Input 
-                  id="price"
-                  name="price"
-                  type="number"
-                  placeholder="e.g., 15000"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
+                <Label htmlFor="property_type">Property Type</Label>
+                <div className="flex gap-4 mt-2">
+                  <label className={`flex items-center justify-center p-3 border rounded-md cursor-pointer w-full ${formData.property_type === 'rental' ? 'bg-primary text-primary-foreground border-primary' : 'border-input bg-background text-foreground'}`}>
+                    <input
+                      type="radio"
+                      name="property_type"
+                      value="rental"
+                      checked={formData.property_type === 'rental'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <Building className="mr-2" size={18} />
+                    Rental
+                  </label>
+                  
+                  <label className={`flex items-center justify-center p-3 border rounded-md cursor-pointer w-full ${formData.property_type === 'pg' ? 'bg-primary text-primary-foreground border-primary' : 'border-input bg-background text-foreground'}`}>
+                    <input
+                      type="radio"
+                      name="property_type"
+                      value="pg"
+                      checked={formData.property_type === 'pg'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    <User2 className="mr-2" size={18} />
+                    PG Accommodation
+                  </label>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="gender_preference">Gender Preference</Label>
+                <div className="flex gap-4 mt-2">
+                  <label className={`flex items-center justify-center p-3 border rounded-md cursor-pointer flex-1 ${formData.gender_preference === 'boys' ? 'bg-primary text-primary-foreground border-primary' : 'border-input bg-background text-foreground'}`}>
+                    <input
+                      type="radio"
+                      name="gender_preference"
+                      value="boys"
+                      checked={formData.gender_preference === 'boys'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    Boys Only
+                  </label>
+                  
+                  <label className={`flex items-center justify-center p-3 border rounded-md cursor-pointer flex-1 ${formData.gender_preference === 'girls' ? 'bg-primary text-primary-foreground border-primary' : 'border-input bg-background text-foreground'}`}>
+                    <input
+                      type="radio"
+                      name="gender_preference"
+                      value="girls"
+                      checked={formData.gender_preference === 'girls'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    Girls Only
+                  </label>
+                  
+                  <label className={`flex items-center justify-center p-3 border rounded-md cursor-pointer flex-1 ${formData.gender_preference === 'any' ? 'bg-primary text-primary-foreground border-primary' : 'border-input bg-background text-foreground'}`}>
+                    <input
+                      type="radio"
+                      name="gender_preference"
+                      value="any"
+                      checked={formData.gender_preference === 'any'}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    No Preference
+                  </label>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -358,23 +467,44 @@ const PostPropertyPage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="square_feet">Area (sq ft)</Label>
+                  <Label htmlFor="floor_number">Floor Number</Label>
                   <Select 
-                    value={formData.square_feet} 
-                    onValueChange={(value) => handleSelectChange('square_feet', value)}
+                    value={formData.floor_number} 
+                    onValueChange={(value) => handleSelectChange('floor_number', value)}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="500">Under 500 sq ft</SelectItem>
-                      <SelectItem value="800">500-800 sq ft</SelectItem>
-                      <SelectItem value="1000">800-1000 sq ft</SelectItem>
-                      <SelectItem value="1500">1000-1500 sq ft</SelectItem>
-                      <SelectItem value="2000">1500+ sq ft</SelectItem>
+                      <SelectItem value="0">Ground Floor</SelectItem>
+                      <SelectItem value="1">1st Floor</SelectItem>
+                      <SelectItem value="2">2nd Floor</SelectItem>
+                      <SelectItem value="3">3rd Floor</SelectItem>
+                      <SelectItem value="4">4th Floor</SelectItem>
+                      <SelectItem value="5">5th Floor</SelectItem>
+                      <SelectItem value="6">6th Floor or higher</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="square_feet">Area (sq ft)</Label>
+                <Select 
+                  value={formData.square_feet} 
+                  onValueChange={(value) => handleSelectChange('square_feet', value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="500">Under 500 sq ft</SelectItem>
+                    <SelectItem value="800">500-800 sq ft</SelectItem>
+                    <SelectItem value="1000">800-1000 sq ft</SelectItem>
+                    <SelectItem value="1500">1000-1500 sq ft</SelectItem>
+                    <SelectItem value="2000">1500+ sq ft</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -435,6 +565,18 @@ const PostPropertyPage: React.FC = () => {
                   value={formData.available_from}
                   onChange={handleChange}
                   className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="restrictions">Restrictions & Rules</Label>
+                <Textarea 
+                  id="restrictions"
+                  name="restrictions"
+                  placeholder="e.g., Gate closing time at 10 PM, no overnight guests, etc."
+                  value={formData.restrictions}
+                  onChange={handleChange}
+                  className="mt-1 min-h-[80px]"
                 />
               </div>
               
@@ -550,6 +692,30 @@ const PostPropertyPage: React.FC = () => {
                     <span className="text-muted-foreground">₹{formData.price}/month</span>
                   </div>
                   <div className="flex items-start">
+                    <span className="font-medium mr-2">Deposit:</span>
+                    <span className="text-muted-foreground">{formData.deposit_amount ? `₹${formData.deposit_amount}` : 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-medium mr-2">Type:</span>
+                    <span className="text-muted-foreground">{formData.property_type === 'pg' ? 'PG Accommodation' : 'Rental'}</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-medium mr-2">For:</span>
+                    <span className="text-muted-foreground">
+                      {formData.gender_preference === 'boys' ? 'Boys Only' : 
+                       formData.gender_preference === 'girls' ? 'Girls Only' : 'Anyone (No Preference)'}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-medium mr-2">Floor:</span>
+                    <span className="text-muted-foreground">
+                      {formData.floor_number === '0' ? 'Ground Floor' : `${formData.floor_number}${
+                        formData.floor_number === '1' ? 'st' : 
+                        formData.floor_number === '2' ? 'nd' : 
+                        formData.floor_number === '3' ? 'rd' : 'th'} Floor`}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
                     <span className="font-medium mr-2">Rooms:</span>
                     <span className="text-muted-foreground">{formData.bedrooms} BR, {formData.bathrooms} Bath</span>
                   </div>
@@ -578,6 +744,12 @@ const PostPropertyPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
+                {formData.restrictions && (
+                  <div className="mt-3">
+                    <span className="text-sm font-medium">Restrictions:</span>
+                    <p className="text-sm text-muted-foreground mt-1">{formData.restrictions}</p>
+                  </div>
+                )}
                 {images.length > 0 && (
                   <div className="mt-4">
                     <span className="text-sm font-medium">Images:</span>
