@@ -18,11 +18,12 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
       mapRef: mapRef.current, 
       latitude, 
       longitude,
-      scriptLoaded
+      scriptLoaded,
+      googleMapsAvailable: !!window.google?.maps
     });
 
-    if (!mapRef.current) {
-      console.error('Map reference is not available yet');
+    if (!mapRef.current || !window.google?.maps) {
+      console.error('Map reference or Google Maps not available');
       return;
     }
 
@@ -32,14 +33,8 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
       return;
     }
 
-    if (!window.google || !window.google.maps) {
-      console.log('Google Maps API not loaded yet, will try again soon');
-      setTimeout(initializeMap, 500);
-      return;
-    }
-
     try {
-      console.log('Initializing map with coordinates:', { latitude, longitude });
+      console.log('Creating map with coordinates:', { latitude, longitude });
       
       const map = new window.google.maps.Map(mapRef.current, {
         center: { lat: latitude, lng: longitude },
@@ -68,8 +63,8 @@ export const useGoogleMap = ({ latitude, longitude, scriptLoaded }: UseGoogleMap
   };
 
   useEffect(() => {
-    if (scriptLoaded && !mapInitialized && mapRef.current) {
-      console.log('Script loaded and map ref available, initializing map');
+    if (scriptLoaded && !mapInitialized && mapRef.current && window.google?.maps) {
+      console.log('All conditions met, initializing map');
       initializeMap();
     }
   }, [scriptLoaded, mapInitialized, latitude, longitude]);

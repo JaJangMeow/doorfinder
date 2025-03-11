@@ -14,7 +14,6 @@ interface GoogleMapProps {
 declare global {
   interface Window {
     google: any;
-    initMap: () => void;
   }
 }
 
@@ -39,14 +38,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({ latitude, longitude }) => {
     setMapError(false);
     setMapLoaded(false);
     setMapInitialized(false);
-    
-    setTimeout(() => {
-      if (window.google && window.google.maps) {
-        initializeMap();
-      } else {
-        window.location.reload();
-      }
-    }, 100);
+    initializeMap();
   };
 
   const handleOpenInGoogleMaps = () => {
