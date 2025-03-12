@@ -23,7 +23,7 @@ const RegisterPage: React.FC = () => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/browse');
+        navigate('/'); // Changed from '/browse' to '/'
       }
     };
     
@@ -125,8 +125,8 @@ const RegisterPage: React.FC = () => {
         description: "Your account has been successfully created and you're now logged in.",
       });
       
-      // Redirect to browse
-      navigate('/browse');
+      // Redirect to home
+      navigate('/'); // Changed from '/browse' to '/'
     } catch (error: any) {
       console.error("Registration error:", error);
       

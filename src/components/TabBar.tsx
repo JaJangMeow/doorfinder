@@ -11,7 +11,7 @@ const TabBar: React.FC = () => {
   const mainTabs = [
     {
       name: "Home",
-      path: "/home",
+      path: "/",
       icon: <Home size={20} />,
     },
     {

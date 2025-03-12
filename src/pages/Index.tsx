@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -8,21 +9,26 @@ import TabBar from "@/components/TabBar";
 import { Building, ChevronDown, BookOpen } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
+
 const Index: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const {
     data: properties,
     isLoading,
     error
   } = useQuery({
     queryKey: ['properties'],
-    queryFn: () => getProperties()
+    queryFn: () => getProperties(),
+    // Add error handling to prevent app crashes
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
+  
   React.useEffect(() => {
     if (error) {
+      console.error('Error loading properties:', error);
       toast({
         title: "Error",
         description: "Failed to load properties. Please try again later.",
@@ -30,7 +36,9 @@ const Index: React.FC = () => {
       });
     }
   }, [error, toast]);
-  return <div className="min-h-screen pb-16 overflow-x-hidden">
+  
+  return (
+    <div className="min-h-screen pb-16 overflow-x-hidden">
       <Navbar />
       
       {/* Hero Section with Classroom Illustration */}
@@ -46,8 +54,8 @@ const Index: React.FC = () => {
               Find Your Perfect <span className="text-primary">Student Housing</span>
             </h1>
             <p className="text-muted-foreground mb-6 animate-slide-up" style={{
-            animationDelay: "100ms"
-          }}>
+              animationDelay: "100ms"
+            }}>
               Connect with fellow students and find affordable housing near your campus.
             </p>
           </div>
@@ -177,6 +185,8 @@ const Index: React.FC = () => {
 
       {/* TabBar */}
       <TabBar />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

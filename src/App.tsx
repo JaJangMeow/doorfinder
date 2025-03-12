@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
 import Index from "@/pages/Index";
@@ -18,6 +18,10 @@ import BrowsePage from "@/pages/BrowsePage";
 
 import { Toaster } from "@/components/ui/toaster";
 import { setupSupabaseStorage } from "@/lib/supabase-setup";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   // Initialize Supabase storage on app mount
@@ -28,23 +32,26 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/welcome" element={<WelcomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/browse" element={<BrowsePage />} />
-        <Route path="/property/:id" element={<PropertyDetailPage />} />
-        <Route path="/saved" element={<SavedPage />} />
-        <Route path="/post" element={<PostPropertyPage />} />
-        <Route path="/my-listings" element={<MyListingsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/browse" element={<BrowsePage />} />
+          <Route path="/property/:id" element={<PropertyDetailPage />} />
+          <Route path="/saved" element={<SavedPage />} />
+          <Route path="/post" element={<PostPropertyPage />} />
+          <Route path="/my-listings" element={<MyListingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </QueryClientProvider>
   );
 }
 

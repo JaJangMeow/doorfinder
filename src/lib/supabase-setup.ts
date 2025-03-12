@@ -3,41 +3,52 @@ import { supabase } from './supabase';
 
 export const setupSupabaseStorage = async () => {
   try {
-    // Check if properties bucket exists
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    // Check if the "properties" bucket exists
+    const { data: buckets, error: bucketsError } = await supabase
+      .storage
+      .listBuckets();
     
     if (bucketsError) {
-      console.error('Error checking buckets:', bucketsError);
-      return;
+      throw bucketsError;
     }
     
     const propertiesBucketExists = buckets.some(bucket => bucket.name === 'properties');
     
     // Create the bucket if it doesn't exist
     if (!propertiesBucketExists) {
-      const { error: createError } = await supabase.storage.createBucket('properties', {
-        public: true,
-        fileSizeLimit: 100000000, // 100MB
-      });
-      
-      if (createError) {
-        console.error('Error creating properties bucket:', createError);
-        return;
-      }
-      
-      console.log('Created "properties" storage bucket');
-      
-      // Set public access for specific paths using the correct method
-      // The previous method setPublic doesn't exist, we need to update the bucket policy
-      const { error: policyError } = await supabase.storage.updateBucket('properties', {
-        public: true
-      });
+      try {
+        const { data, error } = await supabase
+          .storage
+          .createBucket('properties', {
+            public: true,
+            fileSizeLimit: 5242880, // 5MB limit to avoid the "exceeded maximum allowed size" error
+          });
         
-      if (policyError) {
-        console.error('Error setting bucket policy:', policyError);
+        if (error) {
+          throw error;
+        }
+        
+        // Update bucket policies to make it public
+        const { error: policyError } = await supabase
+          .storage
+          .bucket('properties')
+          .update({ public: true });
+        
+        if (policyError) {
+          console.error('Error setting bucket to public:', policyError);
+        }
+        
+        console.log('Properties bucket created successfully');
+      } catch (err) {
+        console.error('Error creating properties bucket:', err);
+        // Don't throw, allow app to continue even if bucket creation fails
       }
     }
+    
+    return true;
   } catch (error) {
-    console.error('Error setting up Supabase storage:', error);
+    console.error('Failed to setup storage:', error);
+    // Don't throw, allow app to continue even if storage setup fails
+    return false;
   }
 };

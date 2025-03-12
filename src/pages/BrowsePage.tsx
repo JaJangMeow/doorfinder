@@ -6,8 +6,8 @@ const BrowsePage: React.FC = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Redirect to login page instead of guest browsing
-    navigate('/login');
+    // Redirect to home page instead of login page
+    navigate('/');
   }, [navigate]);
 
   return (
