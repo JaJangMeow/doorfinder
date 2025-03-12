@@ -19,6 +19,10 @@ export interface PropertyFilter {
   college?: string;
   hasHall?: boolean;
   hasSeparateKitchen?: boolean;
+  hasFurnished?: boolean;
+  hasAC?: boolean;
+  hasWifi?: boolean;
+  hasGym?: boolean;
   propertyType?: 'rental' | 'pg';
   genderPreference?: 'boys' | 'girls' | 'any';
   floorNumber?: number;
@@ -84,6 +88,22 @@ export const getProperties = async (
 
       if (filters.hasSeparateKitchen !== undefined) {
         query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
+      }
+      
+      if (filters.hasFurnished !== undefined) {
+        query = query.eq('is_furnished', filters.hasFurnished);
+      }
+      
+      if (filters.hasAC !== undefined) {
+        query = query.eq('has_ac', filters.hasAC);
+      }
+      
+      if (filters.hasWifi !== undefined) {
+        query = query.eq('has_wifi', filters.hasWifi);
+      }
+      
+      if (filters.hasGym !== undefined) {
+        query = query.eq('has_gym', filters.hasGym);
       }
       
       if (filters.minPrice) {
@@ -265,6 +285,22 @@ export const searchPropertiesByCollege = async (
 
       if (filters.hasSeparateKitchen !== undefined) {
         query = query.eq('has_separate_kitchen', filters.hasSeparateKitchen);
+      }
+      
+      if (filters.hasFurnished !== undefined) {
+        query = query.eq('is_furnished', filters.hasFurnished);
+      }
+      
+      if (filters.hasAC !== undefined) {
+        query = query.eq('has_ac', filters.hasAC);
+      }
+      
+      if (filters.hasWifi !== undefined) {
+        query = query.eq('has_wifi', filters.hasWifi);
+      }
+      
+      if (filters.hasGym !== undefined) {
+        query = query.eq('has_gym', filters.hasGym);
       }
       
       if (filters.propertyType) {

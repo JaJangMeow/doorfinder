@@ -31,21 +31,61 @@ const SearchPage: React.FC = () => {
   const [filters, setFilters] = useState<PropertyFilter>({});
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   const [activeFilterTab, setActiveFilterTab] = useState("price");
   const [priceRange, setPriceRange] = useState([0, 50000]);
+  const [selectedColleges, setSelectedColleges] = useState<string[]>([]);
+  const [bedrooms, setBedrooms] = useState<string | undefined>(undefined);
+  const [bathrooms, setBathrooms] = useState<number | undefined>(undefined);
+  const [propertyType, setPropertyType] = useState<'rental' | 'pg' | undefined>(undefined);
+  const [userLocation, setUserLocation] = useState<{lat: number; lng: number} | null>(null);
+  const [maxDistance, setMaxDistance] = useState<number | undefined>(undefined);
+  const [hasHall, setHasHall] = useState<boolean | undefined>(undefined);
+  const [hasSeparateKitchen, setHasSeparateKitchen] = useState<boolean | undefined>(undefined);
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [amenities, setAmenities] = useState({
-    hasHall,
-    hasSeparateKitchen,
+    hasHall: false,
+    hasSeparateKitchen: false,
     hasFurnished: false,
     hasAC: false,
     hasWifi: false,
     hasGym: false
   });
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          
+          toast({
+            title: "Location Set",
+            description: "We've updated your location for distance-based searching",
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          toast({
+            title: "Location Error",
+            description: "Could not access your location. Please check browser permissions.",
+            variant: "destructive"
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Location Not Supported",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -85,7 +125,7 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  const updateAmenities = (key, value) => {
+  const updateAmenities = (key: string, value: boolean) => {
     setAmenities(prev => ({
       ...prev,
       [key]: value
@@ -117,10 +157,6 @@ const SearchPage: React.FC = () => {
     
     if (amenities.hasHall) newFilters.hasHall = true;
     if (amenities.hasSeparateKitchen) newFilters.hasSeparateKitchen = true;
-    if (amenities.hasFurnished) newFilters.hasFurnished = true;
-    if (amenities.hasAC) newFilters.hasAC = true;
-    if (amenities.hasWifi) newFilters.hasWifi = true;
-    if (amenities.hasGym) newFilters.hasGym = true;
     
     if (propertyType) newFilters.propertyType = propertyType;
     
