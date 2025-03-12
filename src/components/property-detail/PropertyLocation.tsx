@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { MapPin, ExternalLink } from 'lucide-react';
+import { MapPin, ExternalLink, Navigation } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
@@ -45,22 +46,48 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [lng, lat],
         zoom: 15,
-        pitch: 45
+        pitch: 45 // Add a slight tilt for better 3D context
       });
       
       map.current = initializedMap;
 
+      // Add navigation controls (zoom, rotate, etc.)
       initializedMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      initializedMap.addControl(new mapboxgl.StreetViewControl(), 'top-right');
-
+      
+      // Create a marker at the property location
       const initialMarker = new mapboxgl.Marker({ color: '#FF0000' })
         .setLngLat([lng, lat])
         .addTo(initializedMap);
       
       marker.current = initialMarker;
 
+      // Set map as loaded when it's fully initialized
       initializedMap.on('load', () => {
         setMapLoaded(true);
+        
+        // Add 3D buildings for more context if zoomed in enough
+        initializedMap.addLayer({
+          'id': '3d-buildings',
+          'source': 'composite',
+          'source-layer': 'building',
+          'filter': ['==', 'extrude', 'true'],
+          'type': 'fill-extrusion',
+          'minzoom': 15,
+          'paint': {
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': [
+              'interpolate', ['linear'], ['zoom'],
+              15, 0,
+              15.05, ['get', 'height']
+            ],
+            'fill-extrusion-base': [
+              'interpolate', ['linear'], ['zoom'],
+              15, 0,
+              15.05, ['get', 'min_height']
+            ],
+            'fill-extrusion-opacity': 0.6
+          }
+        });
       });
 
       return () => {
@@ -77,6 +104,14 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
       : `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
     
     window.open(mapsUrl, '_blank');
+  };
+
+  const handleOpenGoogleStreetView = () => {
+    if (!hasValidCoordinates) return;
+    
+    // Google Street View URL format
+    const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
+    window.open(streetViewUrl, '_blank');
   };
 
   return (
