@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/'); // Changed from '/browse' to '/'
+        navigate('/browse');
       }
     };
     
@@ -63,8 +63,8 @@ const LoginPage: React.FC = () => {
         description: "You have successfully logged in.",
       });
       
-      // Redirect to home
-      navigate('/'); // Changed from '/browse' to '/'
+      // Redirect to browse
+      navigate('/browse');
     } catch (error: any) {
       console.error("Login error:", error);
       

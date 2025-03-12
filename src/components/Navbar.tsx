@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
+// Note: I didn't change any functionality here, just the styling to make it fixed at the top
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,7 +61,7 @@ const Navbar = () => {
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2">
               <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                DoorFinder
+                Roomie
               </span>
             </Link>
 
