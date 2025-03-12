@@ -74,6 +74,11 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Handle logo click
+  const handleLogoClick = () => {
+    navigate(isAuthenticated ? "/home" : "/");
+  };
+
   return (
     <header
       className={cn(
@@ -120,8 +125,11 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Logo now centered on mobile */}
-        <div className="text-xl font-semibold text-foreground">
+        {/* Logo now clickable */}
+        <div 
+          className="text-xl font-semibold text-foreground cursor-pointer"
+          onClick={handleLogoClick}
+        >
           <span className="text-primary font-bold">Door</span>
           <span>Finder</span>
         </div>
