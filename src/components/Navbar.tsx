@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 
 const Navbar: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -59,16 +58,6 @@ const Navbar: React.FC = () => {
     };
   }, []);
 
-  // Detect scroll position to change navbar appearance
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   // Close mobile menu when navigating
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -80,12 +69,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled ? "py-3 bg-background/80 backdrop-blur-lg shadow-sm" : "py-5"
-      )}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 py-3 bg-background/80 backdrop-blur-lg shadow-sm">
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Mobile Menu Button (Left side) */}
         <button

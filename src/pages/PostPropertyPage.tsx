@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -6,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import Button from "@/components/Button";
 import LocationPicker from "@/components/LocationPicker";
-import ImageUploader from "@/components/ImageUploader";
+import MediaUploader from "@/components/MediaUploader";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,12 +28,17 @@ interface Coordinates {
   lng: number;
 }
 
+interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
+
 const PostPropertyPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: 12.9716, lng: 77.5946 });
-  const [images, setImages] = useState<string[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState({
     title: "",
@@ -51,10 +55,9 @@ const PostPropertyPage: React.FC = () => {
     contact_phone: "",
     has_hall: false,
     has_separate_kitchen: false,
-    // New fields
     floor_number: "0",
-    property_type: "rental", // rental or pg
-    gender_preference: "any", // boys, girls, any
+    property_type: "rental",
+    gender_preference: "any",
     restrictions: "",
     deposit_amount: "",
   });
@@ -78,8 +81,8 @@ const PostPropertyPage: React.FC = () => {
     setCoordinates(coords);
   };
 
-  const handleImagesChange = (urls: string[]) => {
-    setImages(urls);
+  const handleMediaChange = (newMedia: MediaItem[]) => {
+    setMedia(newMedia);
   };
 
   const validateForm = () => {
@@ -128,10 +131,10 @@ const PostPropertyPage: React.FC = () => {
     }
     
     if (formStep === 2) {
-      if (images.length === 0) {
+      if (media.length === 0) {
         toast({
-          title: "Image required",
-          description: "Please upload at least one image of the property",
+          title: "Image or video required",
+          description: "Please upload at least one image or video of the property",
           variant: "destructive",
         });
         return false;
@@ -209,7 +212,7 @@ const PostPropertyPage: React.FC = () => {
       const numericDepositAmount = formData.deposit_amount ? parseFloat(formData.deposit_amount) : null;
       
       console.log("Submitting property with coordinates:", coordinates);
-      console.log("Uploading images:", images);
+      console.log("Uploading media:", media);
       console.log("Form data:", formData);
 
       // Data validation before insert
@@ -217,9 +220,12 @@ const PostPropertyPage: React.FC = () => {
         throw new Error("Required fields are missing");
       }
 
-      if (images.length === 0) {
-        throw new Error("At least one image is required");
+      if (media.length === 0) {
+        throw new Error("At least one image or video is required");
       }
+
+      // Get first image for the main image_url
+      const mainImageUrl = media.find(item => item.type === 'image')?.url || media[0].url;
 
       // Create the property record
       const { data, error } = await supabase
@@ -234,8 +240,8 @@ const PostPropertyPage: React.FC = () => {
             square_feet: numericSquareFeet,
             description: formData.description,
             available_from: formData.available_from,
-            image_url: images[0], // First image as the main image
-            images: images, // All images
+            image_url: mainImageUrl, // First image as the main image
+            media: media, // All media items
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
             contact_phone: formData.contact_phone,
@@ -277,7 +283,6 @@ const PostPropertyPage: React.FC = () => {
     }
   };
 
-  // Popular colleges in Bangalore for quick selection
   const popularColleges = [
     "Bangalore University",
     "Indian Institute of Science (IISc)",
@@ -601,14 +606,15 @@ const PostPropertyPage: React.FC = () => {
             <div className="glass rounded-xl p-6 space-y-6">
               <h2 className="text-xl font-semibold flex items-center">
                 <Image className="mr-2 text-primary" size={20} />
-                Property Images
+                Property Images & Videos
               </h2>
               
               <div className="space-y-4">
-                <ImageUploader 
-                  onImagesChange={handleImagesChange}
-                  initialImages={images}
-                  maxImages={5}
+                <MediaUploader 
+                  onMediaChange={handleMediaChange}
+                  initialMedia={media}
+                  maxImages={10}
+                  maxVideos={5}
                 />
               </div>
             </div>
@@ -750,17 +756,24 @@ const PostPropertyPage: React.FC = () => {
                     <p className="text-sm text-muted-foreground mt-1">{formData.restrictions}</p>
                   </div>
                 )}
-                {images.length > 0 && (
+                {media.length > 0 && (
                   <div className="mt-4">
-                    <span className="text-sm font-medium">Images:</span>
+                    <span className="text-sm font-medium">Media:</span>
                     <div className="flex mt-2 space-x-2 overflow-x-auto pb-2">
-                      {images.map((url, idx) => (
-                        <img 
-                          key={idx} 
-                          src={url} 
-                          alt={`Property preview ${idx+1}`} 
-                          className="h-16 w-16 object-cover rounded-md"
-                        />
+                      {media.map((item, idx) => (
+                        <div key={idx} className="relative h-16 w-16 overflow-hidden rounded-md">
+                          {item.type === 'image' ? (
+                            <img 
+                              src={item.url} 
+                              alt={`Property preview ${idx+1}`} 
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-black">
+                              <span className="text-xs text-white">Video</span>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -785,7 +798,6 @@ const PostPropertyPage: React.FC = () => {
             Help other students find housing near your college campus.
           </p>
           
-          {/* Progress steps */}
           <div className="flex items-center mb-6">
             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${formStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
               1

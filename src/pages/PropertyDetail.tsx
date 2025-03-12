@@ -75,7 +75,7 @@ const PropertyDetailPage: React.FC = () => {
     );
   }
 
-  // Ensure coordinates are valid numbers
+  // Process property data for display
   const processedProperty = {
     ...property,
     latitude: property.latitude && typeof property.latitude !== 'undefined' ? 

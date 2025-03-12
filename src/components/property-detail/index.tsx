@@ -4,12 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import PropertyImageGallery from './PropertyImageGallery';
+import PropertyMediaGallery from './PropertyMediaGallery';
 import PropertyHeader from './PropertyHeader';
 import PropertyFeatures from './PropertyFeatures';
 import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
 import PropertyLocation from './PropertyLocation';
+
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
 
 export interface PropertyDetailData {
   id: string;
@@ -22,6 +27,7 @@ export interface PropertyDetailData {
   availableFrom: string;
   description: string;
   images: string[];
+  media?: MediaItem[];
   contactName: string;
   contactEmail: string;
   contactPhone: string;
@@ -43,6 +49,10 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Convert legacy images array to media format if needed
+  const mediaItems: MediaItem[] = property.media || 
+    (property.images?.map(url => ({ url, type: 'image' as const })) || []);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -132,8 +142,8 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <PropertyImageGallery 
-            images={property.images} 
+          <PropertyMediaGallery 
+            media={mediaItems} 
             title={property.title}
             isSaved={isSaved}
             isLoading={isLoading}
