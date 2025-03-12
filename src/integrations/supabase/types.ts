@@ -51,7 +51,6 @@ export type Database = {
           images: string[] | null
           latitude: number | null
           longitude: number | null
-          media: Json | null
           nearby_college: string | null
           owner_id: string | null
           price: number
@@ -80,7 +79,6 @@ export type Database = {
           images?: string[] | null
           latitude?: number | null
           longitude?: number | null
-          media?: Json | null
           nearby_college?: string | null
           owner_id?: string | null
           price: number
@@ -109,7 +107,6 @@ export type Database = {
           images?: string[] | null
           latitude?: number | null
           longitude?: number | null
-          media?: Json | null
           nearby_college?: string | null
           owner_id?: string | null
           price?: number

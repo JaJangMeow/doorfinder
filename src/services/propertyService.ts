@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
-import { PropertyDetailData, MediaItem } from "@/components/property-detail";
+import { PropertyDetailData } from "@/components/PropertyDetail";
 
 // All properties can include distance property for sorting
 export interface PropertyFilter {
@@ -186,8 +186,7 @@ export const getProperties = async (
       bedrooms: item.bedrooms,
       bathrooms: item.bathrooms || 1,
       availableFrom: item.available_from,
-      imageUrl: item.image_url || (item.media && item.media.length > 0 && item.media[0].type === 'image' ? 
-        item.media[0].url : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80'),
+      imageUrl: item.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
       latitude: item.latitude,
       longitude: item.longitude,
       hasHall: item.has_hall,
@@ -359,8 +358,7 @@ export const searchPropertiesByCollege = async (
       bedrooms: item.bedrooms,
       bathrooms: item.bathrooms || 1,
       availableFrom: item.available_from,
-      imageUrl: item.image_url || (item.media && item.media.length > 0 && item.media[0].type === 'image' ? 
-        item.media[0].url : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80'),
+      imageUrl: item.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
       latitude: item.latitude,
       longitude: item.longitude,
       hasHall: item.has_hall,
@@ -416,17 +414,6 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
     if (error) throw error;
     if (!data) return null;
     
-    // Convert media from JSON to array of MediaItem
-    let mediaItems: MediaItem[] = [];
-    
-    // Process media field if available
-    if (data.media && Array.isArray(data.media)) {
-      mediaItems = data.media as MediaItem[];
-    } else if (data.images && Array.isArray(data.images)) {
-      // Legacy support for images array
-      mediaItems = data.images.map((url: string) => ({ url, type: 'image' as const }));
-    }
-    
     return {
       id: data.id,
       title: data.title,
@@ -438,7 +425,6 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       availableFrom: data.available_from,
       description: data.description || 'No description available.',
       images: data.images || [data.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80'],
-      media: mediaItems,
       contactName: data.contact_name || 'Property Manager',
       contactEmail: data.contact_email || 'contact@example.com',
       contactPhone: data.contact_phone || '(555) 123-4567',

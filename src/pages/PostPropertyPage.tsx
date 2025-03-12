@@ -40,6 +40,27 @@ const PostPropertyPage: React.FC = () => {
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: 12.9716, lng: 77.5946 });
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [formStep, setFormStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: "",
+    address: "",
+    price: "",
+    bedrooms: "2",
+    bathrooms: "1",
+    square_feet: "800",
+    description: "",
+    available_from: new Date().toISOString().split('T')[0],
+    nearby_college: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    has_hall: false,
+    has_separate_kitchen: false,
+    floor_number: "0",
+    property_type: "rental",
+    gender_preference: "any",
+    restrictions: "",
+    deposit_amount: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -220,7 +241,7 @@ const PostPropertyPage: React.FC = () => {
             description: formData.description,
             available_from: formData.available_from,
             image_url: mainImageUrl, // First image as the main image
-            media: media, // All media items as a JSON array
+            media: media, // All media items
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
             contact_phone: formData.contact_phone,

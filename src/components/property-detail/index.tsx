@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -136,26 +137,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
       setIsLoading(false);
     }
   };
-
-  const hasValidCoordinates = 
-    property.latitude !== undefined && 
-    property.longitude !== undefined && 
-    !isNaN(Number(property.latitude)) && 
-    !isNaN(Number(property.longitude)) &&
-    Number(property.latitude) !== 0 &&
-    Number(property.longitude) !== 0;
-
-  // Ensure coordinates are numbers
-  const latitude = hasValidCoordinates ? Number(property.latitude) : 0;
-  const longitude = hasValidCoordinates ? Number(property.longitude) : 0;
-
-  console.log('PropertyDetail - Coordinates check:', { 
-    originalLatitude: property.latitude,
-    originalLongitude: property.longitude,
-    parsedLatitude: latitude,
-    parsedLongitude: longitude,
-    hasValidCoordinates 
-  });
 
   return (
     <div className="container mx-auto px-4 py-8">
