@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -33,6 +34,28 @@ interface MediaItem {
   type: 'image' | 'video';
 }
 
+interface FormData {
+  title: string;
+  address: string;
+  price: string;
+  bedrooms: string;
+  bathrooms: string;
+  square_feet: string;
+  description: string;
+  available_from: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  has_hall: boolean;
+  has_separate_kitchen: boolean;
+  nearby_college: string;
+  floor_number: string;
+  property_type: string;
+  gender_preference: string;
+  restrictions: string;
+  deposit_amount: string;
+}
+
 const PostPropertyPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,6 +63,29 @@ const PostPropertyPage: React.FC = () => {
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: 12.9716, lng: 77.5946 });
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [formStep, setFormStep] = useState(1);
+  
+  // Add missing formData state variable with default values
+  const [formData, setFormData] = useState<FormData>({
+    title: '',
+    address: '',
+    price: '',
+    bedrooms: '1',
+    bathrooms: '1',
+    square_feet: '500',
+    description: '',
+    available_from: new Date().toISOString().split('T')[0],
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    has_hall: false,
+    has_separate_kitchen: false,
+    nearby_college: '',
+    floor_number: '0',
+    property_type: 'rental',
+    gender_preference: 'any',
+    restrictions: '',
+    deposit_amount: ''
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

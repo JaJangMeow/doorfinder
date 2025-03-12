@@ -27,9 +27,11 @@ export const setupSupabaseStorage = async () => {
       
       console.log('Created "properties" storage bucket');
       
-      // Set up bucket policies
-      const { error: policyError } = await supabase.storage.from('properties')
-        .setPublic(['property_images/*', 'property_videos/*']);
+      // Set public access for specific paths using the correct method
+      // The previous method setPublic doesn't exist, we need to update the bucket policy
+      const { error: policyError } = await supabase.storage.updateBucket('properties', {
+        public: true
+      });
         
       if (policyError) {
         console.error('Error setting bucket policy:', policyError);
