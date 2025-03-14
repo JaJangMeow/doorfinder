@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import GoogleMap from './GoogleMap';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import PropertyMediaGallery from './property-detail/PropertyMediaGallery';
 
 export interface PropertyDetailData {
   id: string;
@@ -18,6 +19,7 @@ export interface PropertyDetailData {
   availableFrom: string;
   description: string;
   images: string[];
+  media?: { url: string; type: 'image' | 'video' }[];
   contactName: string;
   contactEmail: string;
   contactPhone: string;
@@ -40,13 +42,18 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Convert legacy images array to media format if needed
+  const mediaItems = property.media && property.media.length > 0 ? 
+    property.media : 
+    (property.images?.map(url => ({ url, type: 'image' as const })) || []);
+
   useEffect(() => {
     const checkAuthentication = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         setUserId(data.session.user.id);
         if (property.id) {
-          const { data: savedData, error } = await supabase
+          const { data: savedData } = await supabase
             .from('saved_properties')
             .select('*')
             .eq('user_id', data.session.user.id)
@@ -136,48 +143,17 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const latitude = hasValidCoordinates ? Number(property.latitude) : 0;
   const longitude = hasValidCoordinates ? Number(property.longitude) : 0;
 
-  console.log('PropertyDetail - Coordinates check:', { 
-    originalLatitude: property.latitude,
-    originalLongitude: property.longitude,
-    parsedLatitude: latitude,
-    parsedLongitude: longitude,
-    hasValidCoordinates 
-  });
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <div className="relative h-96 rounded-xl overflow-hidden">
-            <img
-              src={property.images[0] || 'https://via.placeholder.com/640x360'}
-              alt={property.title}
-              className="object-cover w-full h-full"
-            />
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={handleSaveProperty}
-              disabled={isLoading}
-              className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white"
-            >
-              <Heart 
-                className={isSaved ? "fill-primary text-primary" : "text-muted-foreground"} 
-                size={20} 
-              />
-            </Button>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {property.images.slice(1, 4).map((image, index) => (
-              <div key={index} className="relative h-32 rounded-xl overflow-hidden">
-                <img
-                  src={image || 'https://via.placeholder.com/640x360'}
-                  alt={`${property.title} - Image ${index + 2}`}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ))}
-          </div>
+          <PropertyMediaGallery 
+            media={mediaItems} 
+            title={property.title}
+            isSaved={isSaved}
+            isLoading={isLoading}
+            onSaveToggle={handleSaveProperty}
+          />
         </div>
 
         <div>

@@ -1,6 +1,6 @@
 
-import React, { useState, useRef } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Heart, ChevronLeft, ChevronRight, Play, Pause, X, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MediaItem {
@@ -25,7 +25,9 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   const handlePrevious = () => {
     pauseCurrentVideo();
@@ -63,6 +65,57 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!galleryRef.current) return;
+    
+    if (!fullscreen) {
+      if (galleryRef.current.requestFullscreen) {
+        galleryRef.current.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setFullscreen(document.fullscreenElement !== null);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        handlePrevious();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      } else if (e.key === ' ' || e.key === 'Spacebar') {
+        const currentMedia = media[currentIndex];
+        if (currentMedia?.type === 'video') {
+          e.preventDefault();
+          togglePlay();
+        }
+      } else if (e.key === 'Escape' && fullscreen) {
+        document.exitFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentIndex, media, isPlaying, fullscreen]);
+
   if (!media || media.length === 0) {
     return (
       <div className="relative h-96 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
@@ -74,20 +127,20 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   const currentMedia = media[currentIndex];
 
   return (
-    <div>
-      <div className="relative h-96 rounded-xl overflow-hidden">
+    <div ref={galleryRef} className={`${fullscreen ? 'bg-black fixed inset-0 z-50 p-4' : ''}`}>
+      <div className={`relative ${fullscreen ? 'h-full' : 'h-96'} rounded-xl overflow-hidden`}>
         {currentMedia.type === 'image' ? (
           <img
             src={currentMedia.url}
             alt={`${title} - Image ${currentIndex + 1}`}
-            className="object-cover w-full h-full"
+            className={`object-contain ${fullscreen ? 'w-full h-full' : 'object-cover w-full h-full'}`}
           />
         ) : (
           <video
             ref={el => videoRefs.current[currentIndex] = el}
             src={currentMedia.url}
-            className="object-cover w-full h-full"
-            controls={false}
+            className={`object-contain ${fullscreen ? 'w-full h-full' : 'object-cover w-full h-full'}`}
+            controls={fullscreen}
             loop
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
@@ -95,6 +148,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           />
         )}
 
+        {/* Previous/Next buttons */}
         {media.length > 1 && (
           <>
             <Button 
@@ -116,7 +170,8 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           </>
         )}
 
-        {currentMedia.type === 'video' && (
+        {/* Video controls */}
+        {currentMedia.type === 'video' && !fullscreen && (
           <Button 
             variant="outline" 
             size="icon" 
@@ -127,21 +182,52 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           </Button>
         )}
 
+        {/* Fullscreen toggle */}
         <Button 
           variant="outline" 
           size="icon" 
-          onClick={onSaveToggle}
-          disabled={isLoading}
-          className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white"
+          onClick={toggleFullscreen}
+          className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full"
         >
-          <Heart 
-            className={isSaved ? "fill-primary text-primary" : "text-muted-foreground"} 
-            size={20} 
-          />
+          {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
         </Button>
+
+        {/* Save button */}
+        {!fullscreen && (
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={onSaveToggle}
+            disabled={isLoading}
+            className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white"
+          >
+            <Heart 
+              className={isSaved ? "fill-primary text-primary" : "text-muted-foreground"} 
+              size={20} 
+            />
+          </Button>
+        )}
+
+        {/* Close fullscreen button */}
+        {fullscreen && (
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => document.exitFullscreen()}
+            className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm hover:bg-white"
+          >
+            <X size={20} />
+          </Button>
+        )}
+
+        {/* Media type indicator */}
+        <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+          {currentMedia.type === 'image' ? 'Image' : 'Video'} {currentIndex + 1} of {media.length}
+        </div>
       </div>
 
-      {media.length > 1 && (
+      {/* Thumbnails */}
+      {media.length > 1 && !fullscreen && (
         <div className="mt-4 grid grid-cols-5 gap-2 overflow-x-auto pb-2">
           {media.map((item, index) => (
             <div 

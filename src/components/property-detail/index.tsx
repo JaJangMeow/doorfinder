@@ -10,6 +10,7 @@ import PropertyFeatures from './PropertyFeatures';
 import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
 import PropertyLocation from './PropertyLocation';
+import { setupSupabaseStorage } from '@/lib/supabase-setup';
 
 export interface MediaItem {
   url: string;
@@ -50,9 +51,17 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Ensure Supabase storage is set up
+  useEffect(() => {
+    setupSupabaseStorage();
+  }, []);
+
   // Convert legacy images array to media format if needed
-  const mediaItems: MediaItem[] = property.media || 
+  const mediaItems: MediaItem[] = property.media && property.media.length > 0 ? 
+    property.media : 
     (property.images?.map(url => ({ url, type: 'image' as const })) || []);
+
+  console.log('Property media items:', mediaItems);
 
   useEffect(() => {
     const checkAuthentication = async () => {

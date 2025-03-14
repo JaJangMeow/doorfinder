@@ -26,6 +26,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   const [media, setMedia] = useState<MediaFile[]>(initialMedia);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const { toast } = useToast();
 
   const imageCount = media.filter(item => item.type === 'image').length;
@@ -82,7 +83,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `property_${fileType}s/${fileName}`;
 
-        console.log('Attempting to upload to path:', filePath);
+        console.log(`Uploading ${fileType} to path:`, filePath);
+        console.log(`File size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
@@ -145,6 +147,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     onMediaChange(newMedia);
   };
 
+  const togglePreviewVideo = (url: string | null) => {
+    setPreviewVideo(url);
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -157,7 +163,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="relative w-full h-full bg-black/10">
+              <div 
+                className="relative w-full h-full bg-black/10 cursor-pointer"
+                onClick={() => togglePreviewVideo(item.url)}
+              >
                 <video 
                   src={item.url} 
                   className="h-full w-full object-cover"
@@ -165,6 +174,9 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Video className="text-white/80 h-10 w-10" />
+                  <span className="absolute bottom-1 right-2 text-xs text-white bg-black/50 px-1 rounded">
+                    Video
+                  </span>
                 </div>
               </div>
             )}
@@ -212,6 +224,27 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
           </label>
         )}
       </div>
+      
+      {previewVideo && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-3xl">
+            <video 
+              src={previewVideo} 
+              controls 
+              autoPlay 
+              className="w-full rounded-lg"
+            />
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => togglePreviewVideo(null)}
+              className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
+            >
+              <X size={20} />
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="text-sm text-muted-foreground flex items-center">
         <ImageIcon size={16} className="mr-1" />

@@ -19,7 +19,8 @@ export async function setupSupabaseStorage() {
     if (!propertiesBucketExists) {
       console.log('Creating properties bucket...');
       const { error: createError } = await supabase.storage.createBucket('properties', {
-        public: true
+        public: true,
+        fileSizeLimit: null // Allow unlimited file size for videos
       });
       
       if (createError) {
@@ -29,7 +30,8 @@ export async function setupSupabaseStorage() {
       
       // Update bucket to be public
       const { error: updateError } = await supabase.storage.updateBucket('properties', {
-        public: true
+        public: true,
+        fileSizeLimit: null // Allow unlimited file size for videos
       });
       
       if (updateError) {
@@ -39,13 +41,15 @@ export async function setupSupabaseStorage() {
     } else {
       console.log('Properties bucket already exists');
       
-      // Ensure bucket is public
+      // Ensure bucket is public with unlimited file size
       const { error: updateError } = await supabase.storage.updateBucket('properties', {
-        public: true
+        public: true,
+        fileSizeLimit: null // Allow unlimited file size for videos
       });
       
       if (updateError) {
         console.error('Error updating properties bucket visibility:', updateError);
+        return false;
       }
     }
     
