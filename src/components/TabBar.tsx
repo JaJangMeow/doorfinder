@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, Search, BookmarkCheck, User, Plus } from "lucide-react";
+import { Home, Search, BookmarkCheck, Plus } from "lucide-react";
 
 const TabBar: React.FC = () => {
   const navigate = useNavigate();
@@ -29,17 +29,12 @@ const TabBar: React.FC = () => {
       path: "/saved",
       icon: <BookmarkCheck size={20} />,
     },
-    {
-      name: "Profile",
-      path: "/profile",
-      icon: <User size={20} />,
-    },
   ];
   
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-lg z-50">
       {/* Main tabs */}
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-4 h-16">
         {mainTabs.map((tab) => (
           <button
             key={tab.name}

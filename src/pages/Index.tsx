@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ import TabBar from "@/components/TabBar";
 import { Building, ChevronDown, BookOpen } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
+
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -21,6 +23,7 @@ const Index: React.FC = () => {
     queryKey: ['properties'],
     queryFn: () => getProperties()
   });
+  
   React.useEffect(() => {
     if (error) {
       toast({
@@ -30,6 +33,25 @@ const Index: React.FC = () => {
       });
     }
   }, [error, toast]);
+  
+  const handleOurStoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Our Story",
+      description: "story vak pawh a awm lo, a tul vanga ka siam ve mai2 nih hi... Two days chhung ka siam mut pawh ka mu mumal lo Obedan min be duh lo lehnghal",
+      duration: 5000
+    });
+  };
+  
+  const handleHowItWorksClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast({
+      title: "How It Works",
+      description: "Just post something na,,so simple",
+      duration: 3000
+    });
+  };
+  
   return <div className="min-h-screen pb-16 overflow-x-hidden">
       <Navbar />
       
@@ -139,8 +161,20 @@ const Index: React.FC = () => {
             <div>
               <h3 className="font-medium mb-3 text-sm">About</h3>
               <ul className="space-y-2 text-sm">
-                <li className="Hello"><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Our Story</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">How It Works</a></li>
+                <li className="Hello">
+                  <a href="#" 
+                     className="text-muted-foreground hover:text-primary transition-colors"
+                     onClick={handleOurStoryClick}>
+                    Our Story
+                  </a>
+                </li>
+                <li>
+                  <a href="#" 
+                     className="text-muted-foreground hover:text-primary transition-colors"
+                     onClick={handleHowItWorksClick}>
+                    How It Works
+                  </a>
+                </li>
               </ul>
             </div>
             
