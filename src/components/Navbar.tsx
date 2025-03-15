@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
                     to="/login"
                     className={cn(
                       "py-2 px-4 rounded-md",
-                      location.pathname === "/login" 
+                      location.pathname.includes("/login") 
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-muted"
                     )}
@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
                     to="/register"
                     className={cn(
                       "py-2 px-4 rounded-md",
-                      location.pathname === "/register" 
+                      location.pathname.includes("/register") 
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-muted"
                     )}
