@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -19,4 +20,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Use our custom TypeScript config that allows emit
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      tsconfig: 'tsconfig.app.local.json'
+    }
+  }
 }));
