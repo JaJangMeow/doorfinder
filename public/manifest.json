@@ -20,5 +20,23 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/doorfinderIcon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "DoorFinder App Screenshot"
+    },
+    {
+      "src": "/doorfinderIcon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "DoorFinder App Screenshot"
+    }
+  ],
+  "prefer_related_applications": false,
+  "categories": ["lifestyle", "education", "housing"]
 }

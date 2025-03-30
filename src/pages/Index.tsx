@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -5,10 +6,11 @@ import Navbar from "@/components/Navbar";
 import PropertyCard from "@/components/PropertyCard";
 import Button from "@/components/Button";
 import TabBar from "@/components/TabBar";
-import { Building, ChevronDown, BookOpen, Search, MapPin, Clock, Globe, Map, Layers, Grid, List } from "lucide-react";
+import { Building, ChevronDown, Search, Map, Grid } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
 import PropertyMapView from "@/components/PropertyMapView";
+import DownloadAppButton from "@/components/DownloadAppButton";
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -80,24 +82,6 @@ const Index: React.FC = () => {
     }
   }, [error, toast]);
   
-  const handleOurStoryClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Our Story",
-      description: "We're a team of students who built DoorFinder to make finding student housing easier and more accessible.",
-      duration: 5000
-    });
-  };
-  
-  const handleHowItWorksClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast({
-      title: "How It Works",
-      description: "Browse available properties, connect with landlords, and find your perfect student housing in just a few taps.",
-      duration: 3000
-    });
-  };
-
   const handleToggleMapFullscreen = useCallback(() => {
     setIsMapFullscreen(prev => !prev);
   }, []);
@@ -150,6 +134,11 @@ const Index: React.FC = () => {
               >
                 Explore Map
               </Button>
+            </div>
+            
+            {/* Download App Button */}
+            <div className="mt-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
+              <DownloadAppButton />
             </div>
           </div>
         </div>
@@ -241,132 +230,6 @@ const Index: React.FC = () => {
         </div>
       </section>
       
-      {/* Overview Stats - Enhanced with Icons and Better Layout */}
-      <section className="py-10 bg-gradient-to-r from-primary/5 to-primary/10">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="p-4 bg-white rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Building className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-3xl font-bold text-primary mb-1">300+</div>
-              <div className="text-sm text-muted-foreground">Active Listings</div>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Globe className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-3xl font-bold text-primary mb-1">1000+</div>
-              <div className="text-sm text-muted-foreground">Happy Students</div>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-3xl font-bold text-primary mb-1">50+</div>
-              <div className="text-sm text-muted-foreground">Universities</div>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-3xl font-bold text-primary mb-1">24/7</div>
-              <div className="text-sm text-muted-foreground">Support</div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* How It Works - Enhanced with Better Visuals */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-semibold mb-2 text-center">How It Works</h2>
-          <p className="text-center text-muted-foreground mb-8 max-w-lg mx-auto">
-            Find your ideal student housing in three simple steps
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto stagger-children">
-            <div className="bg-white p-6 rounded-lg shadow-sm text-center border border-border/40 hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Search className="text-primary" size={24} />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Search</h3>
-              <p className="text-muted-foreground text-sm">
-                Use our map view to find housing near your campus with our powerful search filters
-              </p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm text-center border border-border/40 hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MapPin className="text-primary" size={24} />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Connect</h3>
-              <p className="text-muted-foreground text-sm">
-                Chat with student landlords and schedule property viewings in your preferred areas
-              </p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm text-center border border-border/40 hover:shadow-md transition-shadow">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Clock className="text-primary" size={24} />
-              </div>
-              <h3 className="text-lg font-medium mb-2">Move In</h3>
-              <p className="text-muted-foreground text-sm">
-                Complete the paperwork online and enjoy your new student home with peace of mind
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Featured Neighborhoods - New Section */}
-      <section className="py-12 bg-muted/20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-semibold mb-2 text-center">Popular Student Areas</h2>
-          <p className="text-center text-muted-foreground mb-8 max-w-lg mx-auto">
-            Discover the most popular neighborhoods for student housing
-          </p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { name: "Bloomsbury", image: "https://images.unsplash.com/photo-1544954412-78da2cfa1a0c?q=80&w=1200", count: 25 },
-              { name: "Camden", image: "https://images.unsplash.com/photo-1564680550702-20fcf1f87f73?q=80&w=1200", count: 42 },
-              { name: "Islington", image: "https://images.unsplash.com/photo-1600631322138-ea2ca0727665?q=80&w=1200", count: 37 },
-              { name: "Shoreditch", image: "https://images.unsplash.com/photo-1575258904228-7d10170d131a?q=80&w=1200", count: 31 }
-            ].map((area, index) => (
-              <div 
-                key={index} 
-                className="group relative h-48 rounded-lg overflow-hidden"
-                onClick={() => navigate(`/search?location=${area.name}`)}
-              >
-                <img 
-                  src={area.image} 
-                  alt={area.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/0" />
-                <div className="absolute bottom-0 p-4 w-full">
-                  <h3 className="text-lg font-medium text-white">{area.name}</h3>
-                  <p className="text-sm text-white/90">{area.count} properties</p>
-                </div>
-                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-8">
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/search')}
-              className="bg-white"
-            >
-              <Layers size={16} className="mr-2" />
-              Explore All Areas
-            </Button>
-          </div>
-        </div>
-      </section>
-      
       {/* CTA Section - Enhanced */}
       <section className="py-16 bg-primary/10">
         <div className="container mx-auto px-4 text-center">
@@ -394,58 +257,17 @@ const Index: React.FC = () => {
               List Your Property
             </Button>
           </div>
+          
+          {/* Download App Button */}
+          <div className="mt-6">
+            <DownloadAppButton />
+          </div>
         </div>
       </section>
       
-      {/* Improved Footer */}
+      {/* Footer */}
       <footer className="bg-white py-8 border-t border-border">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6">
-            <div>
-              <h3 className="font-medium mb-3 text-sm">About</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="Hello">
-                  <a href="#" 
-                     className="text-muted-foreground hover:text-primary transition-colors touch-feedback"
-                     onClick={handleOurStoryClick}>
-                    Our Story
-                  </a>
-                </li>
-                <li>
-                  <a href="#" 
-                     className="text-muted-foreground hover:text-primary transition-colors touch-feedback"
-                     onClick={handleHowItWorksClick}>
-                    How It Works
-                  </a>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium mb-3 text-sm">Support</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">Help Center</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">Contact Us</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium mb-3 text-sm">Legal</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">Privacy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">Terms</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-medium mb-3 text-sm">Get Started</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/post" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">List Housing</a></li>
-                <li><a href="/search" className="text-muted-foreground hover:text-primary transition-colors touch-feedback">Find Housing</a></li>
-              </ul>
-            </div>
-          </div>
-          
           <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} DoorFinder. All rights reserved.</p>
           </div>

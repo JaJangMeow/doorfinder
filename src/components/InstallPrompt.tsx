@@ -30,11 +30,26 @@ const InstallPrompt: React.FC = () => {
       return;
     }
 
+    // Check if we recently dismissed the prompt
+    const lastDismissed = localStorage.getItem('installPromptDismissed');
+    if (lastDismissed) {
+      const dismissedTime = parseInt(lastDismissed, 10);
+      const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
+      if (Date.now() - dismissedTime < oneWeek) {
+        setShowPrompt(false);
+        return;
+      }
+    }
+
     // Prevent the mini-infobar from appearing on mobile
     const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setInstallPrompt(e);
-      setShowPrompt(true);
+      
+      // Wait a bit before showing the prompt to avoid immediate popup fatigue
+      setTimeout(() => {
+        setShowPrompt(true);
+      }, 3000);
     };
 
     window.addEventListener('beforeinstallprompt', handler as any);
@@ -103,7 +118,7 @@ const InstallPrompt: React.FC = () => {
               onClick={handleInstall}
               iconLeft={<Download size={16} />}
             >
-              Install
+              Install Now
             </Button>
             
             <Button 
