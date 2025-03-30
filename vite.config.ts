@@ -23,11 +23,19 @@ export default defineConfig(({ mode }) => ({
   // Use our custom TypeScript config that allows emit
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    sourcemap: true,
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    }
   },
   optimizeDeps: {
     esbuildOptions: {
-      tsconfig: 'tsconfig.app.local.json'
+      tsconfig: 'tsconfig.app.local.json',
+      target: 'es2020'
     }
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   }
 }));

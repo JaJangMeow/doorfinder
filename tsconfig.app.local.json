@@ -4,7 +4,11 @@
   "compilerOptions": {
     "noEmit": false,
     "emitDeclarationOnly": false,
-    "declaration": false
+    "declaration": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node"
   },
   "include": ["src"]
 }
