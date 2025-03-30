@@ -4,7 +4,7 @@ import { Building, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const EmptyListings: React.FC = () => {
+const EmptyListings = () => {
   return (
     <div className="py-12 text-center">
       <div className="inline-flex flex-col items-center text-muted-foreground">
