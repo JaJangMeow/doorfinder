@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, ArrowLeft, LogIn } from "lucide-react";
@@ -65,12 +64,16 @@ const LoginPage: React.FC = () => {
       
       // Redirect to browse
       navigate('/browse');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Login error:", error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Please check your credentials and try again.";
       
       toast({
         title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -1,5 +1,5 @@
-
-import type { Config } from "tailwindcss";
+import { type Config } from 'tailwindcss';
+import animate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -109,6 +109,14 @@ export default {
 				'pulse-subtle': {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.8' }
+				},
+				'ripple': {
+					'0%': { transform: 'scale(0)', opacity: '0.5' },
+					'100%': { transform: 'scale(4)', opacity: '0' }
+				},
+				'spin-slow': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
 				}
 			},
 			animation: {
@@ -121,7 +129,9 @@ export default {
 				'scale-in': 'scale-in 0.3s ease-out',
 				'scale-out': 'scale-out 0.3s ease-out',
 				'float': 'float 3s ease-in-out infinite',
-				'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite'
+				'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
+				'ripple': 'ripple 0.6s ease-out forwards',
+				'spin-slow': 'spin-slow 6s linear infinite'
 			},
 			transitionProperty: {
 				'height': 'height',
@@ -133,5 +143,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [animate],
 } satisfies Config;
