@@ -16,6 +16,7 @@ import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MyListingsPage from "./pages/MyListingsPage";
+import InstallPrompt from "./components/InstallPrompt";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,13 +27,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// App routing component with transitions
 const AppRoutes = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
   
   useEffect(() => {
-    // Check current session
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
@@ -40,7 +39,6 @@ const AppRoutes = () => {
     
     checkSession();
     
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setIsAuthenticated(!!session);
@@ -52,7 +50,6 @@ const AppRoutes = () => {
     };
   }, []);
   
-  // Loading spinner
   if (isAuthenticated === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background/80">
@@ -67,68 +64,64 @@ const AppRoutes = () => {
     );
   }
   
-  // Protected route component - strictly for authenticated users
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
 
-  // Semi-protected route component - redirect to auth page if not authenticated
   const SemiProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<WelcomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      
-      {/* Protected Routes - redirect to login if not authenticated */}
-      <Route path="/home" element={
-        <SemiProtectedRoute>
-          <Index />
-        </SemiProtectedRoute>
-      } />
-      <Route path="/property/:id" element={
-        <SemiProtectedRoute>
-          <PropertyDetail />
-        </SemiProtectedRoute>
-      } />
-      <Route path="/search" element={
-        <SemiProtectedRoute>
-          <SearchPage />
-        </SemiProtectedRoute>
-      } />
-      <Route path="/saved" element={
-        <SemiProtectedRoute>
-          <SavedPage />
-        </SemiProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <SemiProtectedRoute>
-          <ProfilePage />
-        </SemiProtectedRoute>
-      } />
-      <Route path="/my-listings" element={
-        <SemiProtectedRoute>
-          <MyListingsPage />
-        </SemiProtectedRoute>
-      } />
-      
-      {/* Fully Protected Routes - only for authenticated users */}
-      <Route path="/post" element={
-        <ProtectedRoute>
-          <PostPropertyPage />
-        </ProtectedRoute>
-      } />
-      
-      {/* Redirects */}
-      <Route path="/browse" element={<Navigate to="/search" replace />} />
-      
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <InstallPrompt />
+      <Routes>
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        
+        <Route path="/home" element={
+          <SemiProtectedRoute>
+            <Index />
+          </SemiProtectedRoute>
+        } />
+        <Route path="/property/:id" element={
+          <SemiProtectedRoute>
+            <PropertyDetail />
+          </SemiProtectedRoute>
+        } />
+        <Route path="/search" element={
+          <SemiProtectedRoute>
+            <SearchPage />
+          </SemiProtectedRoute>
+        } />
+        <Route path="/saved" element={
+          <SemiProtectedRoute>
+            <SavedPage />
+          </SemiProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <SemiProtectedRoute>
+            <ProfilePage />
+          </SemiProtectedRoute>
+        } />
+        <Route path="/my-listings" element={
+          <SemiProtectedRoute>
+            <MyListingsPage />
+          </SemiProtectedRoute>
+        } />
+        
+        <Route path="/post" element={
+          <ProtectedRoute>
+            <PostPropertyPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/browse" element={<Navigate to="/search" replace />} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 };
 
