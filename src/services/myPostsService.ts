@@ -5,10 +5,8 @@ import { PropertyData } from "@/components/PropertyCard";
 export const fetchUserListings = async (): Promise<PropertyData[]> => {
   // Get current user
   const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData.session?.user.id;
   
-  // If no user is logged in, return empty array
-  if (!userId) {
+  if (!sessionData.session) {
     return [];
   }
   
@@ -16,7 +14,7 @@ export const fetchUserListings = async (): Promise<PropertyData[]> => {
   const { data: listingsData, error: listingsError } = await supabase
     .from('properties')
     .select('*')
-    .eq('owner_id', userId)
+    .eq('owner_id', sessionData.session.user.id)
     .order('created_at', { ascending: false });
   
   if (listingsError) throw listingsError;

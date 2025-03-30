@@ -25,10 +25,7 @@ export async function setupSupabaseStorage() {
       
       if (createError) {
         console.error('Error creating properties bucket:', createError);
-        // Continue execution even if bucket creation fails
-        // This handles the case where the user doesn't have permission to create buckets
-        console.log('Continuing without properties bucket');
-        return true; // Return true to allow the app to continue loading
+        return false;
       }
       
       // Update bucket to be public
@@ -39,7 +36,7 @@ export async function setupSupabaseStorage() {
       
       if (updateError) {
         console.error('Error updating properties bucket visibility:', updateError);
-        return true; // Return true to allow the app to continue loading
+        return false;
       }
     } else {
       console.log('Properties bucket already exists');
@@ -52,7 +49,7 @@ export async function setupSupabaseStorage() {
       
       if (updateError) {
         console.error('Error updating properties bucket visibility:', updateError);
-        return true; // Return true to allow the app to continue loading
+        return false;
       }
     }
     
@@ -60,6 +57,6 @@ export async function setupSupabaseStorage() {
     return true;
   } catch (error) {
     console.error('Unexpected error setting up Supabase storage:', error);
-    return true; // Return true to allow the app to continue loading even if there's an error
+    return false;
   }
 }

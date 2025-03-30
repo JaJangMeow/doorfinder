@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { setupSupabaseStorage } from "@/lib/supabase-setup";
 import Index from "./pages/Index";
 import PropertyDetail from "./pages/PropertyDetail";
 import NotFound from "./pages/NotFound";
@@ -32,15 +30,6 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   
   useEffect(() => {
-    // Setup Supabase storage
-    setupSupabaseStorage().then(success => {
-      if (success) {
-        console.log("Supabase storage setup successful");
-      } else {
-        console.error("Supabase storage setup failed");
-      }
-    });
-    
     // Check current session
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();

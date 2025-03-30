@@ -49,9 +49,6 @@ export type Database = {
           id: string
           image_url: string | null
           images: string[] | null
-          landlord_email: string | null
-          landlord_name: string | null
-          landlord_phone: string | null
           latitude: number | null
           longitude: number | null
           media: Json | null
@@ -81,9 +78,6 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[] | null
-          landlord_email?: string | null
-          landlord_name?: string | null
-          landlord_phone?: string | null
           latitude?: number | null
           longitude?: number | null
           media?: Json | null
@@ -113,9 +107,6 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[] | null
-          landlord_email?: string | null
-          landlord_name?: string | null
-          landlord_phone?: string | null
           latitude?: number | null
           longitude?: number | null
           media?: Json | null
