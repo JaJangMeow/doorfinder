@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { MapPin, Calendar, Home, Bath, ChevronRight, Check } from "lucide-react";
+import { MapPin, Calendar, Home, Bath, ChevronRight, Check, Heart, Bookmark } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export interface PropertyData {
@@ -24,9 +23,17 @@ interface PropertyCardProps {
   property: PropertyData;
   className?: string;
   style?: React.CSSProperties;
+  onSave?: (propertyId: string) => void;
+  isSaved?: boolean;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ 
+  property, 
+  className, 
+  style, 
+  onSave,
+  isSaved = false
+}) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -55,13 +62,32 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 card-hover",
+        "group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 card-hover sheen-effect",
         className
       )}
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Save button - only show if onSave handler is provided */}
+      {onSave && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSave(property.id);
+          }}
+          className={cn(
+            "absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300",
+            isSaved ? "text-primary" : "text-muted-foreground",
+            isHovered ? "opacity-100" : "opacity-0"
+          )}
+          aria-label={isSaved ? "Unsave property" : "Save property"}
+        >
+          <Heart size={16} className={isSaved ? "fill-primary" : ""} />
+        </button>
+      )}
+
       {/* Image with loading state */}
       <div
         className={cn(
@@ -80,18 +106,18 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
             isHovered && "scale-[1.05]"
           )}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
       {/* Content */}
       <div className="p-4">
         <div className="mb-3">
-          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary mb-2">
+          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary mb-2 animate-fade-in stagger-1">
             Available {formatDate(property.availableFrom)}
           </span>
-          <h3 className="font-medium text-lg mb-1 text-balance">{property.title}</h3>
+          <h3 className="font-medium text-lg mb-1 text-balance line-clamp-2 group-hover:text-primary transition-colors duration-300">{property.title}</h3>
           <div className="flex items-center text-muted-foreground text-sm">
-            <MapPin size={14} className="mr-1" />
+            <MapPin size={14} className="mr-1 flex-shrink-0" />
             <span className="truncate">{property.address}</span>
           </div>
         </div>
@@ -99,13 +125,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
         {/* Amenities */}
         <div className="flex flex-wrap gap-2 mb-3">
           {property.hasHall && (
-            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center">
+            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center animate-fade-in stagger-2">
               <Check size={12} className="mr-1 text-primary" />
               Hall
             </span>
           )}
           {property.hasSeparateKitchen && (
-            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center">
+            <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center animate-fade-in stagger-3">
               <Check size={12} className="mr-1 text-primary" />
               Separate Kitchen
             </span>
@@ -118,10 +144,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
               <Home size={14} className="mr-1 text-muted-foreground" />
               <span>{property.bedrooms} {property.bedrooms === 1 ? 'bed' : 'beds'}</span>
             </div>
-            <div className="flex items-center text-sm">
-              <Bath size={14} className="mr-1 text-muted-foreground" />
-              <span>{property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}</span>
-            </div>
+            {property.bathrooms && (
+              <div className="flex items-center text-sm">
+                <Bath size={14} className="mr-1 text-muted-foreground" />
+                <span>{property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}</span>
+              </div>
+            )}
           </div>
           <div className="font-semibold">${formatPrice(property.price)}</div>
         </div>
@@ -129,7 +157,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
         {property.distance !== undefined && (
           <div className="mt-2 text-xs text-muted-foreground">
             <span className="flex items-center">
-              <MapPin size={12} className="mr-1" />
+              <MapPin size={12} className="mr-1 flex-shrink-0" />
               {property.distance.toFixed(1)} km away
             </span>
           </div>

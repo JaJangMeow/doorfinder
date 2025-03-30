@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,11 +42,16 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent content shift when scrollbars appear */
+    overflow-y: scroll;
+    /* Disable pull-to-refresh for PWA experience */
+    overscroll-behavior-y: none;
   }
 
   /* Custom scroll bar */
@@ -66,6 +70,14 @@
   
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/30;
+  }
+  
+  /* Improve tap targets for mobile */
+  @media (max-width: 768px) {
+    button, a, input, select {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }
 
@@ -98,6 +110,101 @@
       transform: translateX(100%);
     }
   }
+
+  /* Enhanced button hover effect */
+  .btn-hover-effect {
+    @apply relative overflow-hidden;
+  }
+  
+  .btn-hover-effect::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-hover-effect:hover::after {
+    @apply opacity-100;
+  }
+
+  /* Animated underline for links */
+  .link-underline {
+    @apply relative;
+  }
+  
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 ease-out;
+  }
+  
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Fade-in animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  /* Fade-in-up animation for mobile */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+  
+  /* Subtle pulse animation */
+  @keyframes pulse-subtle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s infinite ease-in-out;
+  }
+  
+  /* Staggered animation utility classes */
+  .stagger-1 { animation-delay: 100ms; }
+  .stagger-2 { animation-delay: 200ms; }
+  .stagger-3 { animation-delay: 300ms; }
+  .stagger-4 { animation-delay: 400ms; }
+  .stagger-5 { animation-delay: 500ms; }
+  
+  /* Hide scrollbar for clean design */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+  
+  /* Mobile bottom safe area for iOS devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  
+  /* Mobile top safe area for iOS devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 16px);
+  }
+  
+  /* Mobile bottom navigation bar */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t z-50 py-2 safe-area-bottom;
+  }
+  
+  /* App-like button */
+  .app-button {
+    @apply flex items-center justify-center rounded-full py-3 px-6 font-medium shadow-sm transition-all duration-200 active:scale-95;
+  }
 }
 
 /* Page transitions */
@@ -106,7 +213,8 @@
 }
 
 .page-enter-active {
-  @apply opacity-100 transition-opacity duration-300;
+  @apply opacity-100 transition-all duration-500 ease-out;
+  transform: translateY(0);
 }
 
 .page-exit {
@@ -114,5 +222,55 @@
 }
 
 .page-exit-active {
-  @apply opacity-0 transition-opacity duration-300;
+  @apply opacity-0 transition-all duration-300 ease-in;
+  transform: translateY(-10px);
+}
+
+/* Sheen effect for cards */
+.sheen-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(30deg);
+  transition: transform 0.7s ease-in-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sheen-effect:hover::after {
+  transform: rotate(30deg) translate(100%, 100%);
+}
+
+/* Mobile slide-in animation */
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.slide-in-bottom {
+  animation: slideInFromBottom 0.3s forwards ease-out;
+}
+
+/* Mobile app install prompt */
+.app-install-prompt {
+  @apply fixed bottom-4 left-4 right-4 bg-primary text-white rounded-xl p-4 shadow-lg z-50 slide-in-bottom;
+}
+
+/* App status bar */
+.app-status-bar {
+  @apply fixed top-0 left-0 right-0 h-8 bg-background/90 backdrop-blur-lg z-50 safe-area-top;
 }
