@@ -203,7 +203,6 @@ const PostPropertyPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      // Convert numeric fields
       const numericPrice = parseFloat(formData.price);
       const numericBedrooms = parseInt(formData.bedrooms);
       const numericBathrooms = parseInt(formData.bathrooms);
@@ -215,7 +214,6 @@ const PostPropertyPage: React.FC = () => {
       console.log("Uploading media:", media);
       console.log("Form data:", formData);
 
-      // Data validation before insert
       if (!formData.title || !formData.address || isNaN(numericPrice) || !coordinates.lat || !coordinates.lng) {
         throw new Error("Required fields are missing");
       }
@@ -224,10 +222,8 @@ const PostPropertyPage: React.FC = () => {
         throw new Error("At least one image or video is required");
       }
 
-      // Get first image for the main image_url
       const mainImageUrl = media.find(item => item.type === 'image')?.url || media[0].url;
 
-      // Create the property record
       const { data, error } = await supabase
         .from('properties')
         .insert([
@@ -240,8 +236,8 @@ const PostPropertyPage: React.FC = () => {
             square_feet: numericSquareFeet,
             description: formData.description,
             available_from: formData.available_from,
-            image_url: mainImageUrl, // First image as the main image
-            media: media, // All media items
+            image_url: mainImageUrl,
+            media: media,
             contact_name: formData.contact_name,
             contact_email: formData.contact_email,
             contact_phone: formData.contact_phone,
@@ -250,7 +246,6 @@ const PostPropertyPage: React.FC = () => {
             has_hall: formData.has_hall,
             has_separate_kitchen: formData.has_separate_kitchen,
             nearby_college: formData.nearby_college || "Not specified",
-            // New fields
             floor_number: numericFloorNumber,
             property_type: formData.property_type,
             gender_preference: formData.gender_preference,
@@ -635,6 +630,10 @@ const PostPropertyPage: React.FC = () => {
                   defaultLocation={coordinates}
                   height="400px"
                   zoom={15}
+                  onChange={(location) => {
+                    console.log("Location changed:", location);
+                  }}
+                  value=""
                 />
               </div>
             </div>

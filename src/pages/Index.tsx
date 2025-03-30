@@ -52,8 +52,8 @@ const Index: React.FC = () => {
     const handleScroll = () => {
       if (heroRef.current) {
         const scrollY = window.scrollY;
-        const heroImg = heroRef.current.querySelector('img');
-        const heroContent = heroRef.current.querySelector('.hero-content');
+        const heroImg = heroRef.current.querySelector('img') as HTMLImageElement | null;
+        const heroContent = heroRef.current.querySelector('.hero-content') as HTMLElement | null;
         
         if (heroImg && heroContent) {
           // Parallax effect for background image
