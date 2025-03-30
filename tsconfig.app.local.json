@@ -4,7 +4,7 @@
   "compilerOptions": {
     "noEmit": false,
     "emitDeclarationOnly": false,
-    "declaration": false,
+    "declaration": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "esModuleInterop": true,

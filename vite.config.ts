@@ -30,17 +30,12 @@ export default defineConfig(({ mode }) => ({
     }
   },
   optimizeDeps: {
-    esbuildOptions: {
-      tsconfig: 'tsconfig.app.local.json',
+    esbuild: {
       target: 'es2020'
     }
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
-    tsconfigRaw: {
-      compilerOptions: {
-        target: 'es2020'
-      }
-    }
+    target: 'es2020'
   }
 }));
