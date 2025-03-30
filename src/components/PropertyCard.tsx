@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { MapPin, Calendar, Home, Bath, ChevronRight, Check } from "lucide-react";
+import { MapPin, Calendar, Home, Bath, ChevronRight, Check, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export interface PropertyData {
@@ -29,7 +28,10 @@ interface PropertyCardProps {
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (imageRef.current && imageRef.current.complete) {
@@ -52,15 +54,43 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
     return price.toLocaleString("en-US");
   };
 
+  // Handle touch events for mobile
+  const handleTouchStart = () => {
+    setIsTouched(true);
+    // Add haptic feedback if available
+    if ('vibrate' in navigator) {
+      navigator.vibrate(5);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouched(false);
+  };
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFavorite(!isFavorite);
+    
+    // Add haptic feedback if available
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
   return (
     <div
+      ref={cardRef}
       className={cn(
-        "group relative overflow-hidden rounded-2xl bg-card transition-all duration-300 card-hover",
+        "group relative overflow-hidden rounded-2xl bg-card border border-border/40 transition-all duration-300 card-hover",
+        isHovered || isTouched ? "shadow-md" : "shadow-sm",
         className
       )}
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Image with loading state */}
       <div
@@ -77,10 +107,33 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
           className={cn(
             "h-full w-full object-cover transition-all duration-700",
             isImageLoaded ? "opacity-100" : "opacity-0",
-            isHovered && "scale-[1.05]"
+            (isHovered || isTouched) && "scale-[1.05]"
           )}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-t from-black/30 to-transparent transition-opacity duration-300",
+          (isHovered || isTouched) ? "opacity-100" : "opacity-0"
+        )} />
+        
+        {/* Favorite Button */}
+        <button 
+          onClick={toggleFavorite}
+          className={cn(
+            "absolute top-3 right-3 z-20 p-2 rounded-full transition-all duration-300 transform",
+            isFavorite 
+              ? "bg-primary text-white" 
+              : "bg-white/80 text-foreground backdrop-blur-sm",
+            (isHovered || isTouched) ? "scale-100 opacity-100" : "scale-90 opacity-0"
+          )}
+        >
+          <Heart 
+            size={18} 
+            className={cn(
+              "transition-transform duration-300",
+              isFavorite && "fill-current animate-scale-in"
+            )}
+          />
+        </button>
       </div>
 
       {/* Content */}
@@ -89,9 +142,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
           <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary mb-2">
             Available {formatDate(property.availableFrom)}
           </span>
-          <h3 className="font-medium text-lg mb-1 text-balance">{property.title}</h3>
+          <h3 className="font-medium text-lg mb-1 text-balance line-clamp-1">{property.title}</h3>
           <div className="flex items-center text-muted-foreground text-sm">
-            <MapPin size={14} className="mr-1" />
+            <MapPin size={14} className="mr-1 shrink-0" />
             <span className="truncate">{property.address}</span>
           </div>
         </div>
@@ -107,7 +160,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
           {property.hasSeparateKitchen && (
             <span className="text-xs bg-muted py-1 px-2 rounded-full flex items-center">
               <Check size={12} className="mr-1 text-primary" />
-              Separate Kitchen
+              Kitchen
             </span>
           )}
         </div>
@@ -118,10 +171,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
               <Home size={14} className="mr-1 text-muted-foreground" />
               <span>{property.bedrooms} {property.bedrooms === 1 ? 'bed' : 'beds'}</span>
             </div>
-            <div className="flex items-center text-sm">
-              <Bath size={14} className="mr-1 text-muted-foreground" />
-              <span>{property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}</span>
-            </div>
+            {property.bathrooms && (
+              <div className="flex items-center text-sm">
+                <Bath size={14} className="mr-1 text-muted-foreground" />
+                <span>{property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}</span>
+              </div>
+            )}
           </div>
           <div className="font-semibold">${formatPrice(property.price)}</div>
         </div>
@@ -129,7 +184,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
         {property.distance !== undefined && (
           <div className="mt-2 text-xs text-muted-foreground">
             <span className="flex items-center">
-              <MapPin size={12} className="mr-1" />
+              <MapPin size={12} className="mr-1 shrink-0" />
               {property.distance.toFixed(1)} km away
             </span>
           </div>
@@ -138,11 +193,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, className, style 
         <Link
           to={`/property/${property.id}`}
           className={cn(
-            "absolute inset-0 z-10 flex items-end justify-end p-4 opacity-0 transition-opacity duration-300",
-            isHovered && "opacity-100"
+            "absolute inset-0 z-10 flex items-end justify-end p-4 opacity-0 transition-all duration-300",
+            (isHovered || isTouched) && "opacity-100"
           )}
         >
-          <span className="flex items-center justify-center rounded-full bg-primary w-10 h-10 text-primary-foreground shadow-lg transform transition-transform duration-300 group-hover:scale-110">
+          <span className="flex items-center justify-center rounded-full bg-primary w-10 h-10 text-primary-foreground shadow-lg transform transition-transform duration-300 group-hover:scale-110 active:scale-95">
             <ChevronRight size={18} />
           </span>
         </Link>

@@ -271,11 +271,12 @@ const PostPropertyPage: React.FC = () => {
       });
       
       navigate('/search');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error posting property:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to post property. Please try again.";
       toast({
         title: "Error",
-        description: error.message || "Failed to post property. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

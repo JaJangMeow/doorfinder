@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
@@ -26,11 +25,7 @@ const MyListingsPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchMyListings();
-  }, []);
-
-  const fetchMyListings = async () => {
+  const fetchMyListings = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -80,7 +75,11 @@ const MyListingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchMyListings();
+  }, [fetchMyListings]);
 
   const handleDeleteListing = async () => {
     if (!propertyToDelete) return;

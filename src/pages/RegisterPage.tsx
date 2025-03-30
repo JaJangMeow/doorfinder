@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, ArrowLeft, UserPlus } from "lucide-react";
@@ -127,12 +126,12 @@ const RegisterPage: React.FC = () => {
       
       // Redirect to browse
       navigate('/browse');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
       
       let errorMessage = "An error occurred during registration.";
       
-      if (error.message.includes("User already registered")) {
+      if (error instanceof Error && error.message.includes("User already registered")) {
         errorMessage = "This email is already registered. Please use a different email or login instead.";
       }
       

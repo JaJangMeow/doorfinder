@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Building, Home, MapPin, Ruler, Bed, Bath, Calendar, User, Mail, Phone, Coffee, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import GoogleMap from './GoogleMap';
+import PropertyMapView from './PropertyMapView';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import PropertyMediaGallery from './property-detail/PropertyMediaGallery';
@@ -143,6 +142,22 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const latitude = hasValidCoordinates ? Number(property.latitude) : 0;
   const longitude = hasValidCoordinates ? Number(property.longitude) : 0;
 
+  // Create a property object for the map view
+  const propertyForMap = {
+    id: property.id,
+    title: property.title,
+    address: property.address,
+    price: property.price,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    availableFrom: property.availableFrom,
+    imageUrl: property.images && property.images.length > 0 ? property.images[0] : '',
+    latitude,
+    longitude,
+    hasHall: property.hasHall,
+    hasSeparateKitchen: property.hasSeparateKitchen
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -236,51 +251,43 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
             </div>
           )}
 
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold text-gray-900">Contact Information</h2>
-            <div className="mt-2">
-              <div className="flex items-center text-gray-700">
-                <User className="mr-2 h-5 w-5" />
-                {property.contactName}
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Mail className="mr-2 h-5 w-5" />
-                {property.contactEmail}
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Phone className="mr-2 h-5 w-5" />
-                {property.contactPhone}
+          {hasValidCoordinates && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Location</h2>
+              <div className="h-[300px] rounded-lg overflow-hidden">
+                <PropertyMapView 
+                  properties={[propertyForMap]} 
+                  userLocation={null}
+                />
               </div>
             </div>
-            <Button className="mt-4" onClick={handleContactClick}>
+          )}
+
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 className="text-xl font-semibold mb-4">Contact</h2>
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <User className="h-5 w-5 mr-2 text-gray-500" />
+                <span>{property.contactName}</span>
+              </div>
+              <div className="flex items-center">
+                <Mail className="h-5 w-5 mr-2 text-gray-500" />
+                <span>{property.contactEmail}</span>
+              </div>
+              <div className="flex items-center">
+                <Phone className="h-5 w-5 mr-2 text-gray-500" />
+                <span>{property.contactPhone}</span>
+              </div>
+            </div>
+            <Button 
+              className="w-full mt-4" 
+              onClick={handleContactClick}
+            >
               Contact Owner
             </Button>
           </div>
         </div>
       </div>
-
-      {hasValidCoordinates ? (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Location</h2>
-          <div className="mt-2 rounded-xl overflow-hidden">
-            <GoogleMap latitude={latitude} longitude={longitude} />
-          </div>
-        </div>
-      ) : (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Location</h2>
-          <div className="mt-2 rounded-xl overflow-hidden bg-muted h-[400px] flex items-center justify-center">
-            <div className="text-center p-4">
-              <p className="text-muted-foreground mb-4">Location information not available</p>
-              <Button 
-                onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(property.address)}`, '_blank')}
-              >
-                Search Address in Google Maps
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="mt-8">
         <Button variant="outline" onClick={() => navigate(-1)}>

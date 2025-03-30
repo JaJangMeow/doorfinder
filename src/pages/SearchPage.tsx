@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { 
   Search, BookOpen, MapPin, Building, Bath, School, Info, 
   HelpCircle, Phone, X, Check, Filter, SlidersHorizontal, 
-  ChevronsUpDown, Bed, Home, House, DollarSign, Maximize
+  ChevronsUpDown, Bed, Home, House, DollarSign, Maximize, Map
 } from "lucide-react";
 import { searchPropertiesByCollege, PropertyFilter, SortOption, BANGALORE_COLLEGES } from "@/services/propertyService";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import PropertyMapView from "@/components/PropertyMapView";
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,6 +32,8 @@ const SearchPage: React.FC = () => {
   const [filters, setFilters] = useState<PropertyFilter>({});
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const { toast } = useToast();
 
   const [activeFilterTab, setActiveFilterTab] = useState("price");
@@ -57,6 +60,11 @@ const SearchPage: React.FC = () => {
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
+      toast({
+        title: "Getting your location",
+        description: "Please wait while we find your position...",
+      });
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -85,6 +93,18 @@ const SearchPage: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleOpenMap = () => {
+    // If we don't have the user's location yet, try to get it
+    if (!userLocation) {
+      getUserLocation();
+    }
+    setIsMapModalOpen(true);
+  };
+
+  const handleToggleMapFullscreen = () => {
+    setIsMapFullscreen(prev => !prev);
   };
 
   useEffect(() => {
@@ -582,6 +602,30 @@ const SearchPage: React.FC = () => {
                 </Tabs>
               </PopoverContent>
             </Popover>
+
+            <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleOpenMap}
+                >
+                  <Map size={16} />
+                  View Map
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[90vw] md:max-w-[80vw] lg:max-w-[1000px] p-0">
+                <div className="h-[70vh]">
+                  <PropertyMapView 
+                    properties={properties} 
+                    userLocation={userLocation}
+                    onClose={() => setIsMapModalOpen(false)}
+                    isFullscreen={isMapFullscreen}
+                    onToggleFullscreen={handleToggleMapFullscreen}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <Select value={sortOption} onValueChange={val => handleSort(val as SortOption)}>
               <SelectTrigger className="w-[180px]">

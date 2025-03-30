@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import { PropertyData } from "@/components/PropertyCard";
@@ -19,11 +18,7 @@ const MyPostsPage: React.FC = () => {
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchMyListings();
-  }, []);
-
-  const fetchMyListings = async () => {
+  const fetchMyListings = useCallback(async () => {
     try {
       setIsLoading(true);
       const propertyData = await fetchUserListings();
@@ -38,7 +33,11 @@ const MyPostsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchMyListings();
+  }, [fetchMyListings]);
 
   const handleDeleteListing = async () => {
     if (!propertyToDelete) return;

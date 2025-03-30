@@ -1,12 +1,12 @@
-
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MapPin, Search, ExternalLink } from 'lucide-react';
+import { MapPin, Search, ExternalLink, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { GOOGLE_MAPS_API_KEY } from '@/lib/supabase';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 interface Coordinates {
   lat: number;
@@ -19,6 +19,49 @@ interface LocationPickerProps {
   className?: string;
   height?: string;
   zoom?: number;
+  value?: string;
+  onChange: (location: string, lat?: number, lng?: number) => void;
+  placeholder?: string;
+  error?: boolean;
+  setSelectedLocation?: (location: { lat: number; lng: number; address: string } | null) => void;
+}
+
+interface PredictionResult {
+  description: string;
+  place_id: string;
+}
+
+interface GooglePlaceResult {
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+  formatted_address?: string;
+}
+
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        places: {
+          AutocompleteService: new () => {
+            getPlacePredictions: (
+              request: { input: string; componentRestrictions?: { country: string } },
+              callback: (predictions: PredictionResult[] | null) => void
+            ) => void;
+          };
+          PlacesService: new (element: HTMLDivElement) => {
+            getDetails: (
+              request: { placeId: string; fields: string[] },
+              callback: (result: GooglePlaceResult | null, status: string) => void
+            ) => void;
+          };
+        };
+      };
+    };
+  }
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = ({ 
@@ -26,16 +69,28 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   defaultLocation = { lat: 12.9716, lng: 77.5946 }, // Default to Bangalore coordinates
   className,
   height = '300px',
-  zoom = 12
+  zoom = 12,
+  value = '',
+  onChange,
+  placeholder = 'Enter a location',
+  error = false,
+  setSelectedLocation,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [coordinates, setCoordinates] = useState<Coordinates>(defaultLocation);
   const [isLocating, setIsLocating] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(value);
   const [isSearching, setIsSearching] = useState(false);
+  const [predictions, setPredictions] = useState<PredictionResult[]>([]);
+  const [showPredictions, setShowPredictions] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const placesServiceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useOnClickOutside(containerRef, () => setShowPredictions(false));
 
   // Initialize map
   useEffect(() => {
@@ -93,7 +148,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     return () => {
       initializedMap.remove();
     };
-  }, [onLocationSelect, zoom]);
+  }, [onLocationSelect, zoom, coordinates.lat, coordinates.lng]);
 
   // Update marker if defaultLocation changes
   useEffect(() => {
@@ -207,14 +262,92 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     window.open(googleMapsUrl, '_blank');
   };
 
+  // Initialize Google Places service
+  useEffect(() => {
+    if (!placesServiceRef.current) {
+      placesServiceRef.current = document.createElement('div');
+    }
+  }, []);
+
+  const fetchPredictions = useCallback((input: string) => {
+    if (!input || input.length < 3 || !window.google?.maps?.places) {
+      setPredictions([]);
+      return;
+    }
+
+    setLoading(true);
+    const autocompleteService = new window.google.maps.places.AutocompleteService();
+    
+    autocompleteService.getPlacePredictions(
+      {
+        input,
+        componentRestrictions: { country: 'uk' },
+      },
+      (results) => {
+        setLoading(false);
+        if (results) {
+          setPredictions(results);
+          setShowPredictions(true);
+        } else {
+          setPredictions([]);
+        }
+      }
+    );
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    fetchPredictions(value);
+  }, [fetchPredictions]);
+
+  const handleSelectPrediction = useCallback((prediction: PredictionResult) => {
+    setSearchQuery(prediction.description);
+    setShowPredictions(false);
+    onChange(prediction.description);
+    
+    // Get place details to extract lat lng
+    if (window.google?.maps?.places && placesServiceRef.current) {
+      const placesService = new window.google.maps.places.PlacesService(placesServiceRef.current);
+      
+      placesService.getDetails(
+        {
+          placeId: prediction.place_id,
+          fields: ['geometry', 'formatted_address'],
+        },
+        (result, status) => {
+          if (status === 'OK' && result && result.geometry && result.geometry.location) {
+            const lat = result.geometry.location.lat();
+            const lng = result.geometry.location.lng();
+            onChange(prediction.description, lat, lng);
+            
+            if (setSelectedLocation) {
+              setSelectedLocation({
+                lat,
+                lng,
+                address: prediction.description,
+              });
+            }
+          } else {
+            toast({
+              title: 'Error',
+              description: 'Could not get location details',
+              variant: 'destructive',
+            });
+          }
+        }
+      );
+    }
+  }, [onChange, setSelectedLocation, toast]);
+
   return (
     <div className={`${className || ''}`}>
       <div className="glass mb-2">
         <form onSubmit={handleSearch} className="flex gap-2 mb-2">
           <Input
-            placeholder="Search for address, landmark, or area"
+            placeholder={placeholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleInputChange}
             className="flex-1"
           />
           <Button 

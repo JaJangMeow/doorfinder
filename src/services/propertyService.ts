@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
 import { PropertyDetailData } from "@/components/PropertyDetail";
@@ -179,7 +178,26 @@ export const getProperties = async (
       
     if (error) throw error;
     
-    let properties = data.map((item: any) => ({
+    interface PropertyItem {
+      id: string;
+      title: string;
+      address: string;
+      price: number;
+      bedrooms: number;
+      bathrooms?: number;
+      available_from: string;
+      image_url?: string;
+      latitude: number | null;
+      longitude: number | null;
+      has_hall?: boolean;
+      has_separate_kitchen?: boolean;
+      property_type?: 'rental' | 'pg';
+      gender_preference?: 'boys' | 'girls' | 'any';
+      floor_number?: number;
+      deposit_amount?: number;
+    }
+    
+    let properties = data.map((item: PropertyItem) => ({
       id: item.id,
       title: item.title,
       address: item.address,
@@ -351,7 +369,26 @@ export const searchPropertiesByCollege = async (
       
     if (error) throw error;
     
-    let properties = data.map((item: any) => ({
+    interface PropertyItem {
+      id: string;
+      title: string;
+      address: string;
+      price: number;
+      bedrooms: number;
+      bathrooms?: number;
+      available_from: string;
+      image_url?: string;
+      latitude: number | null;
+      longitude: number | null;
+      has_hall?: boolean;
+      has_separate_kitchen?: boolean;
+      property_type?: 'rental' | 'pg';
+      gender_preference?: 'boys' | 'girls' | 'any';
+      floor_number?: number;
+      deposit_amount?: number;
+    }
+    
+    let properties = data.map((item: PropertyItem) => ({
       id: item.id,
       title: item.title,
       address: item.address,

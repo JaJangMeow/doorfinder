@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import TabBar from "@/components/TabBar";
 import PropertyCard, { PropertyData } from "@/components/PropertyCard";
@@ -14,11 +13,7 @@ const SavedPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSavedProperties();
-  }, []);
-
-  const fetchSavedProperties = async () => {
+  const fetchSavedProperties = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -27,39 +22,44 @@ const SavedPage: React.FC = () => {
       
       if (!sessionData.session) {
         setIsLoading(false);
+        setSavedProperties([]);
         return;
       }
       
-      // Get saved properties
-      const { data: savedData, error: savedError } = await supabase
+      const { data, error } = await supabase
         .from('saved_properties')
-        .select(`
-          property_id,
-          saved_at,
-          properties(
-            id, title, address, price, bedrooms, bathrooms, 
-            available_from, images, latitude, longitude,
-            has_hall, has_separate_kitchen, nearby_college
-          )
-        `)
-        .eq('user_id', sessionData.session.user.id)
-        .order('saved_at', { ascending: false });
+        .select('*, properties(*)')
+        .eq('user_id', sessionData.session.user.id);
+        
+      if (error) throw error;
       
-      if (savedError) throw savedError;
-      
-      if (!savedData || savedData.length === 0) {
+      if (!data || data.length === 0) {
         setSavedProperties([]);
         setIsLoading(false);
         return;
       }
       
-      // Transform the data to match PropertyData interface
-      // Using a proper type check to ensure properties exist
-      const propertyData: PropertyData[] = savedData
-        .filter(item => item.properties) // Filter out null properties
+      interface PropertyItemData {
+        properties: {
+          id: string;
+          title: string;
+          address: string;
+          price: number;
+          bedrooms: number;
+          bathrooms?: number;
+          available_from: string;
+          images?: string[];
+          latitude: number | null;
+          longitude: number | null;
+          has_hall?: boolean;
+          has_separate_kitchen?: boolean;
+        };
+      }
+      
+      const propertyData: PropertyData[] = data
         .map(item => {
           // Access properties safely by correctly typing the item
-          const property = item.properties as any;
+          const property = (item as PropertyItemData).properties;
           return {
             id: property.id,
             title: property.title,
@@ -89,7 +89,11 @@ const SavedPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchSavedProperties();
+  }, [fetchSavedProperties]);
 
   const handleRemoveSaved = async (propertyId: string) => {
     try {

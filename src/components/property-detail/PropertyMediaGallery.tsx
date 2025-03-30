@@ -1,7 +1,7 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Heart, ChevronLeft, ChevronRight, Play, Pause, X, Maximize, Minimize, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MediaItem {
   url: string;
@@ -27,54 +27,47 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Validate the media array to ensure all items have valid URLs
-  const validMedia = media.filter(item => item && item.url && typeof item.url === 'string' && item.url.trim() !== '');
+  // Filter out invalid media
+  const validMedia = media.filter(item => item.url && (item.type === 'image' || item.type === 'video'));
 
-  const handlePrevious = () => {
-    pauseCurrentVideo();
-    setCurrentIndex(prev => (prev === 0 ? validMedia.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    pauseCurrentVideo();
-    setCurrentIndex(prev => (prev === validMedia.length - 1 ? 0 : prev + 1));
-  };
-
-  const togglePlay = () => {
-    if (validMedia.length === 0) return;
-    
-    const currentMedia = validMedia[currentIndex];
-    if (currentMedia.type === 'video') {
-      const videoElement = videoRefs.current[currentIndex];
-      if (videoElement) {
-        if (isPlaying) {
-          videoElement.pause();
-        } else {
-          videoElement.play().catch(error => {
-            console.error('Error playing video:', error);
-            setMediaError('Error playing video. Please try again.');
-          });
-        }
-        setIsPlaying(!isPlaying);
-      }
-    }
-  };
-
-  const pauseCurrentVideo = () => {
-    if (validMedia.length === 0) return;
-    
-    const currentMedia = validMedia[currentIndex];
-    if (currentMedia?.type === 'video') {
-      const videoElement = videoRefs.current[currentIndex];
-      if (videoElement) {
-        videoElement.pause();
+  const pauseCurrentVideo = useCallback(() => {
+    if (validMedia[currentIndex]?.type === 'video') {
+      const video = videoRefs.current[currentIndex];
+      if (video) {
+        video.pause();
         setIsPlaying(false);
       }
     }
-  };
+  }, [currentIndex, validMedia]);
+
+  const handlePrevious = useCallback(() => {
+    pauseCurrentVideo();
+    setCurrentIndex(prevIndex => 
+      prevIndex === 0 ? validMedia.length - 1 : prevIndex - 1
+    );
+  }, [validMedia.length, pauseCurrentVideo]);
+
+  const handleNext = useCallback(() => {
+    pauseCurrentVideo();
+    setCurrentIndex(prevIndex => 
+      prevIndex === validMedia.length - 1 ? 0 : prevIndex + 1
+    );
+  }, [validMedia.length, pauseCurrentVideo]);
+
+  const togglePlay = useCallback(() => {
+    const video = videoRefs.current[currentIndex];
+    if (video) {
+      if (isPlaying) {
+        video.pause();
+      } else {
+        video.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  }, [currentIndex, isPlaying, videoRefs]);
 
   const toggleFullscreen = () => {
     if (!galleryRef.current) return;
@@ -129,7 +122,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentIndex, validMedia, isPlaying, fullscreen]);
+  }, [currentIndex, validMedia, isPlaying, fullscreen, handleNext, handlePrevious, togglePlay]);
 
   // Handle case when media array changes
   useEffect(() => {
@@ -144,6 +137,10 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
       setCurrentIndex(0);
     }
   }, [currentIndex, validMedia]);
+
+  if (isLoading) {
+    return <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg" />;
+  }
 
   if (!validMedia || validMedia.length === 0) {
     return (
