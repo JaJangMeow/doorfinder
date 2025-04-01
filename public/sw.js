@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'doorfinder-cache-v1';
+const CACHE_NAME = 'doorfinder-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -26,8 +26,18 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Cache and return requests
+// Cache and return requests with improved image handling
 self.addEventListener('fetch', (event) => {
+  // Apply different strategies based on request type
+  const url = new URL(event.request.url);
+  
+  // Special handling for image requests
+  if (event.request.destination === 'image' || 
+      url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i)) {
+    event.respondWith(imageStrategy(event.request));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -64,9 +74,44 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Special strategy for images - stale-while-revalidate
+const imageStrategy = async (request) => {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+  
+  const fetchAndCache = async () => {
+    try {
+      const networkResponse = await fetch(request);
+      
+      // Cache the new response (only if successful)
+      if (networkResponse.ok) {
+        cache.put(request, networkResponse.clone());
+      }
+      
+      return networkResponse;
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      // If the network request fails and we don't have a cached response, 
+      // we need to throw to trigger the catch block
+      if (!cachedResponse) throw error;
+      return cachedResponse;
+    }
+  };
+  
+  // Return cached response immediately if available (stale)
+  if (cachedResponse) {
+    // Update the cache in the background
+    fetchAndCache().catch(console.error);
+    return cachedResponse;
+  }
+  
+  // If nothing in cache, wait for the network response
+  return fetchAndCache();
+};
+
 // Update service worker
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = ['doorfinder-cache-v1'];
+  const cacheWhitelist = ['doorfinder-cache-v2'];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(

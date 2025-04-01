@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import PropertyMediaGallery from './PropertyMediaGallery';
 import PropertyHeader from './PropertyHeader';
 import PropertyFeatures from './PropertyFeatures';
@@ -11,6 +10,10 @@ import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
 import PropertyLocation from './PropertyLocation';
 import { setupSupabaseStorage } from '@/lib/supabase-setup';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Home, MapPin, Info, Phone } from 'lucide-react';
 
 export interface MediaItem {
   url: string;
@@ -50,6 +53,7 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Ensure Supabase storage is set up
   useEffect(() => {
@@ -157,9 +161,10 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
+    <div className="container mx-auto px-4 md:px-6 py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left column with images and main info */}
+        <div className="lg:col-span-8">
           <PropertyMediaGallery 
             media={mediaItems} 
             title={property.title}
@@ -167,53 +172,176 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
             isLoading={isLoading}
             onSaveToggle={handleSaveProperty}
           />
-        </div>
-
-        <div>
-          <PropertyHeader 
-            title={property.title}
-            address={property.address}
-            price={property.price}
-            availableFrom={property.availableFrom}
-            depositAmount={property.depositAmount}
-            isSaved={isSaved}
-            isLoading={isLoading}
-            onSaveToggle={handleSaveProperty}
-          />
           
-          <PropertyFeatures 
-            bedrooms={property.bedrooms}
-            bathrooms={property.bathrooms}
-            squareFeet={property.squareFeet}
-            propertyType={property.propertyType}
-            floorNumber={property.floorNumber}
-            genderPreference={property.genderPreference}
-          />
+          <div className="mt-6">
+            <PropertyHeader 
+              title={property.title}
+              address={property.address}
+              price={property.price}
+              availableFrom={property.availableFrom}
+              depositAmount={property.depositAmount}
+              isSaved={isSaved}
+              isLoading={isLoading}
+              onSaveToggle={handleSaveProperty}
+            />
+          </div>
           
-          <PropertyDescription 
-            description={property.description}
-            restrictions={property.restrictions}
-          />
+          <div className="mt-6">
+            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-4 mb-6">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="details" className="flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  <span className="hidden sm:inline">Details</span>
+                </TabsTrigger>
+                <TabsTrigger value="location" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Location</span>
+                </TabsTrigger>
+                <TabsTrigger value="contact" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <span className="hidden sm:inline">Contact</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview" className="space-y-6">
+                <Card className="p-4 shadow-sm">
+                  <PropertyFeatures 
+                    bedrooms={property.bedrooms}
+                    bathrooms={property.bathrooms}
+                    squareFeet={property.squareFeet}
+                    propertyType={property.propertyType}
+                    floorNumber={property.floorNumber}
+                    genderPreference={property.genderPreference}
+                  />
+                </Card>
+                
+                <Card className="p-4 shadow-sm">
+                  <PropertyDescription 
+                    description={property.description}
+                    restrictions={property.restrictions}
+                  />
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="details" className="space-y-6">
+                <Card className="p-4 shadow-sm">
+                  <h3 className="text-xl font-semibold mb-4">Additional Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-medium">Available From:</span> {new Date(property.availableFrom).toLocaleDateString()}
+                      </div>
+                      {property.depositAmount && (
+                        <div>
+                          <span className="font-medium">Security Deposit:</span> ₹{property.depositAmount}
+                        </div>
+                      )}
+                      {property.hasHall !== undefined && (
+                        <div>
+                          <span className="font-medium">Hall:</span> {property.hasHall ? 'Yes' : 'No'}
+                        </div>
+                      )}
+                      {property.hasSeparateKitchen !== undefined && (
+                        <div>
+                          <span className="font-medium">Separate Kitchen:</span> {property.hasSeparateKitchen ? 'Yes' : 'No'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {property.nearbyCollege && (
+                        <div>
+                          <span className="font-medium">Nearby College:</span> {property.nearbyCollege}
+                        </div>
+                      )}
+                      {property.floorNumber !== undefined && (
+                        <div>
+                          <span className="font-medium">Floor:</span> {property.floorNumber === 0 ? 'Ground Floor' : `${property.floorNumber} floor`}
+                        </div>
+                      )}
+                      {property.genderPreference && (
+                        <div>
+                          <span className="font-medium">Suitable for:</span> {property.genderPreference === 'boys' ? 'Boys' : property.genderPreference === 'girls' ? 'Girls' : 'Anyone'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="location" className="space-y-6">
+                <Card className="p-4 shadow-sm">
+                  <PropertyLocation 
+                    latitude={property.latitude}
+                    longitude={property.longitude}
+                    address={property.address}
+                  />
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="contact" className="space-y-6">
+                <Card className="p-4 shadow-sm">
+                  <ContactInformation 
+                    contactName={property.contactName}
+                    contactEmail={property.contactEmail}
+                    contactPhone={property.contactPhone}
+                    onContactClick={handleContactClick}
+                  />
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-      </div>
-
-      <PropertyLocation 
-        latitude={property.latitude}
-        longitude={property.longitude}
-        address={property.address}
-      />
-
-      <ContactInformation 
-        contactName={property.contactName}
-        contactEmail={property.contactEmail}
-        contactPhone={property.contactPhone}
-        onContactClick={handleContactClick}
-      />
-
-      <div className="mt-8">
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          Back to Search
-        </Button>
+        
+        {/* Right sticky column with key information */}
+        <div className="lg:col-span-4">
+          <div className="sticky top-24 space-y-6">
+            <Card className="p-4 shadow-sm">
+              <h3 className="text-lg font-semibold mb-3">Quick Info</h3>
+              <Separator className="my-3" />
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Price</span>
+                  <span className="font-medium">₹{property.price}/month</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Bedrooms</span>
+                  <span>{property.bedrooms}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Bathrooms</span>
+                  <span>{property.bathrooms}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Area</span>
+                  <span>{property.squareFeet} sqft</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Type</span>
+                  <span>{property.propertyType === 'pg' ? 'PG Accommodation' : 'Rental'}</span>
+                </div>
+              </div>
+              <Separator className="my-3" />
+              <ContactInformation 
+                contactName={property.contactName}
+                contactEmail={property.contactEmail}
+                contactPhone={property.contactPhone}
+                onContactClick={handleContactClick}
+                compact={true}
+              />
+            </Card>
+            
+            {property.nearbyCollege && (
+              <Card className="p-4 shadow-sm">
+                <h3 className="text-lg font-semibold mb-2">Nearby College</h3>
+                <p>{property.nearbyCollege}</p>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
