@@ -18,9 +18,8 @@ const Index: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const {
     data: properties,
     isLoading,
@@ -86,7 +85,8 @@ const Index: React.FC = () => {
     setIsMapFullscreen(prev => !prev);
   }, []);
   
-  return <div className="min-h-screen pb-16 overflow-x-hidden">
+  return (
+    <div className="min-h-screen pb-16 overflow-x-hidden">
       <Navbar />
       
       {/* Hero Section with Dynamic Background and Enhanced CTA */}
@@ -276,6 +276,8 @@ const Index: React.FC = () => {
 
       {/* TabBar */}
       <TabBar />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

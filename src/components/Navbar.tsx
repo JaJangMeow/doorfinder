@@ -1,181 +1,201 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Menu, X, Home, LogOut, Settings, User } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Home, Search, Heart, Building, ChevronDown } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import ContactDialog from '@/components/ContactDialog';
 
 const Navbar: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Close mobile menu when navigating
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
-  // Handle scroll detection for shadow
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    fetchUser();
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
   }, []);
 
-  // Handle logo click
-  const handleLogoClick = () => {
-    navigate("/home");
-  };
-
-  // Handle sign out
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
       toast({
-        title: "Signed out",
-        description: "You have been signed out successfully.",
-        duration: 3000,
+        title: 'Error',
+        description: 'Failed to log out. Please try again.',
+        variant: 'destructive',
       });
-    } catch (error) {
+    } else {
+      navigate('/login');
       toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
+        title: 'Success',
+        description: 'Logged out successfully.',
       });
     }
   };
 
-  return (
-    <header className={cn(
-      "fixed top-0 left-0 right-0 z-50 py-3 bg-background/80 backdrop-blur-lg transition-all duration-300 safe-area-top",
-      scrolled ? "shadow-md" : "shadow-sm"
-    )}>
-      <div className="container mx-auto px-4 flex items-center justify-center">
-        {/* Mobile Menu Button (Left side) */}
-        <button
-          onClick={() => {
-            setIsMobileMenuOpen(!isMobileMenuOpen);
-            // Add haptic feedback if available
-            if ('vibrate' in navigator) {
-              navigator.vibrate(5);
-            }
-          }}
-          className="md:hidden absolute left-4 p-1 rounded-full hover:bg-muted active:bg-muted/80 transition-colors"
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6 animate-fade-in" />
-          ) : (
-            <Menu className="h-6 w-6 animate-fade-in" />
-          )}
-        </button>
-        
-        {/* Logo now centered and clickable with animation */}
-        <div 
-          className="text-xl font-semibold text-foreground cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95"
-          onClick={handleLogoClick}
-        >
-          <span className="text-primary font-bold">Door</span>
-          <span>Finder</span>
-        </div>
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
-        {/* Mobile Menu */}
-        <div
-          className={cn(
-            "fixed top-[57px] left-0 right-0 bg-background/95 backdrop-blur-lg shadow-lg md:hidden transition-all duration-300 ease-out transform z-40 border-b border-border",
-            isMobileMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0 pointer-events-none"
-          )}
-        >
-          <div className="container mx-auto px-4 py-4 space-y-4">
-            <nav className="flex flex-col space-y-1">
-              {location.pathname === "/" ? (
-                <>
-                  <Link
-                    to="/login"
-                    className={cn(
-                      "py-3 px-4 rounded-md flex items-center",
-                      location.pathname.includes("/login") 
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted active:bg-muted/80"
-                    )}
-                  >
-                    <User className="mr-3 h-5 w-5" />
-                    <span>Sign in</span>
+  const toggleProfile = () => {
+    setIsProfileOpen(!isProfileOpen);
+  };
+
+  const closeProfile = () => {
+    setIsProfileOpen(false);
+  };
+
+  const handleContactUsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsContactDialogOpen(true);
+  };
+
+  return (
+    <>
+      <nav className="sticky top-0 z-30 w-full bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/home" className="flex items-center font-bold text-xl">
+            DoorFinder
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1">
+            <Link to="/" className={`py-2 px-3 hover:text-primary transition-colors ${location.pathname === '/' ? 'text-primary font-medium' : ''}`}>
+              Home
+            </Link>
+            <Link to="/search" className={`py-2 px-3 hover:text-primary transition-colors ${location.pathname === '/search' ? 'text-primary font-medium' : ''}`}>
+              Browse
+            </Link>
+            <Link to="/saved" className={`py-2 px-3 hover:text-primary transition-colors ${location.pathname === '/saved' ? 'text-primary font-medium' : ''}`}>
+              Saved
+            </Link>
+            <a href="#" onClick={handleContactUsClick} className="py-2 px-3 hover:text-primary transition-colors">
+              Contact Us
+            </a>
+          </div>
+
+          {/* Profile Menu */}
+          {user ? (
+            <div className="relative hidden md:block">
+              <button onClick={toggleProfile} className="flex items-center gap-2 py-2 px-3 rounded-md hover:bg-accent transition-colors">
+                <User size={20} className="text-muted-foreground" />
+                <ChevronDown size={16} className="text-muted-foreground" />
+              </button>
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border overflow-hidden">
+                  <Link to="/profile" className="flex items-center px-4 py-2 text-sm hover:bg-accent transition-colors" onClick={closeProfile}>
+                    <User size={16} className="mr-2" />
+                    Profile
                   </Link>
-                  <Link
-                    to="/register"
-                    className={cn(
-                      "py-3 px-4 rounded-md flex items-center",
-                      location.pathname.includes("/register") 
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted active:bg-muted/80"
-                    )}
-                  >
-                    <User className="mr-3 h-5 w-5" />
-                    <span>Register</span>
+                  <Link to="/my-listings" className="flex items-center px-4 py-2 text-sm hover:bg-accent transition-colors" onClick={closeProfile}>
+                    <Building size={16} className="mr-2" />
+                    My Listings
                   </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/home"
-                    className={cn(
-                      "py-3 px-4 rounded-md flex items-center",
-                      location.pathname === "/home" 
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted active:bg-muted/80"
-                    )}
-                  >
-                    <Home className="mr-3 h-5 w-5" />
-                    <span>Home</span>
-                  </Link>
-                  
-                  <Link
-                    to="/profile"
-                    className={cn(
-                      "py-3 px-4 rounded-md flex items-center",
-                      location.pathname === "/profile" 
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted active:bg-muted/80"
-                    )}
-                  >
-                    <Settings className="mr-3 h-5 w-5" />
-                    <span>Settings</span>
-                  </Link>
-                  
-                  <button
-                    onClick={handleSignOut}
-                    className="py-3 px-4 rounded-md text-left flex items-center hover:bg-muted active:bg-muted/80 w-full text-destructive"
-                  >
-                    <LogOut className="mr-3 h-5 w-5" />
-                    <span>Sign out</span>
+                  <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm hover:bg-accent transition-colors text-left">
+                    <LogOut size={16} className="mr-2" />
+                    Logout
                   </button>
-                </>
+                </div>
               )}
-            </nav>
+            </div>
+          ) : (
+            <div className="hidden md:block">
+              <Link to="/login" className="py-2 px-3 hover:text-primary transition-colors">
+                Login
+              </Link>
+              <Link to="/register" className="py-2 px-3 bg-primary text-primary-foreground rounded-md shadow hover:opacity-90 transition-colors">
+                Register
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button onClick={toggleMenu} className="md:hidden">
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </nav>
+      
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col p-4">
+          {/* Mobile Menu Top Section */}
+          <div className="flex items-center justify-between">
+            <Link to="/home" className="flex items-center font-bold text-xl" onClick={() => setIsMenuOpen(false)}>
+              DoorFinder
+            </Link>
+            <button onClick={toggleMenu}>
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="flex flex-col mt-8 space-y-6 text-lg px-2">
+            <Link to="/" onClick={() => setIsMenuOpen(false)} className={`flex items-center space-x-2 ${location.pathname === '/' ? 'text-primary font-medium' : ''}`}>
+              <Home size={20} />
+              <span>Home</span>
+            </Link>
+            <Link to="/search" onClick={() => setIsMenuOpen(false)} className={`flex items-center space-x-2 ${location.pathname === '/search' ? 'text-primary font-medium' : ''}`}>
+              <Search size={20} />
+              <span>Browse</span>
+            </Link>
+            <Link to="/saved" onClick={() => setIsMenuOpen(false)} className={`flex items-center space-x-2 ${location.pathname === '/saved' ? 'text-primary font-medium' : ''}`}>
+              <Heart size={20} />
+              <span>Saved</span>
+            </Link>
+            <a href="#" onClick={(e) => { setIsMenuOpen(false); handleContactUsClick(e); }} className="flex items-center space-x-2">
+              <User size={20} />
+              <span>Contact Us</span>
+            </a>
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2">
+                  <User size={20} />
+                  <span>Profile</span>
+                </Link>
+                 <Link to="/my-listings" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2">
+                  <Building size={20} />
+                  <span>My Listings</span>
+                </Link>
+                <button onClick={handleLogout} className="flex items-center space-x-2">
+                  <LogOut size={20} />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2">
+                  <User size={20} />
+                  <span>Login</span>
+                </Link>
+                <Link to="/register" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2">
+                  <User size={20} />
+                  <span>Register</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
-        
-        {/* Overlay for mobile menu */}
-        {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black/20 z-30 md:hidden animate-fade-in"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-      </div>
-    </header>
+      )}
+      
+      {/* Contact Dialog */}
+      <ContactDialog 
+        open={isContactDialogOpen} 
+        onOpenChange={setIsContactDialogOpen} 
+      />
+    </>
   );
 };
 
