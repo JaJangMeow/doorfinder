@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { MapPin, ExternalLink, Navigation, Compass, Info, Home, Building, Coffee } from 'lucide-react';
+import { MapPin, ExternalLink, Navigation, Compass, Info, Home, Building, Coffee, Map } from 'lucide-react';
 import { useGoogleMapsScript } from '@/hooks/useGoogleMapsScript';
 import { useGoogleMap } from '@/hooks/useGoogleMap';
 

@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { PropertyData } from '@/components/PropertyCard';
 import { Button } from '@/components/ui/button';
-import { MapPin, Maximize2, Minimize2, Home, X, Info, Layers, Navigation } from 'lucide-react';
+import { MapPin, Maximize2, Minimize2, Home, X, Info, Layers, Navigation, Bed, Bath } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
