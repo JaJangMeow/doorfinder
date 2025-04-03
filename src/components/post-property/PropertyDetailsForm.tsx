@@ -13,6 +13,13 @@ interface PropertyDetailsFormProps {
 }
 
 const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ methods, popularColleges }) => {
+  const { setValue } = methods;
+  
+  // Use controlled handlers to prevent form resets
+  const handleSelectChange = (field: string, value: string) => {
+    setValue(field, value, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+  };
+
   return (
     <div className="glass rounded-xl p-6 space-y-6">
       <h2 className="text-xl font-semibold flex items-center">
@@ -188,7 +195,9 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ methods, popu
               <FormLabel>Nearby College/University</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                }}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -281,7 +290,9 @@ const PropertyFeatures: React.FC<{ methods: any }> = ({ methods }) => {
               <FormLabel>Bedrooms</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                }}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -309,7 +320,9 @@ const PropertyFeatures: React.FC<{ methods: any }> = ({ methods }) => {
               <FormLabel>Bathrooms</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                }}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -336,7 +349,9 @@ const PropertyFeatures: React.FC<{ methods: any }> = ({ methods }) => {
               <FormLabel>Floor Number</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                }}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -367,7 +382,9 @@ const PropertyFeatures: React.FC<{ methods: any }> = ({ methods }) => {
             <FormLabel>Area (sq ft)</FormLabel>
             <Select 
               value={field.value} 
-              onValueChange={field.onChange}
+              onValueChange={(value) => {
+                field.onChange(value);
+              }}
             >
               <FormControl>
                 <SelectTrigger className="mt-1">

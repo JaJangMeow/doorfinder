@@ -125,7 +125,8 @@ const PostPropertyPage: React.FC = () => {
     return true;
   };
 
-  const nextStep = () => {
+  const nextStep = (e: React.FormEvent) => {
+    e.preventDefault();
     if (validateStep()) {
       setFormStep(prev => prev + 1);
       window.scrollTo(0, 0);
@@ -254,7 +255,7 @@ const PostPropertyPage: React.FC = () => {
           <ProgressIndicator currentStep={formStep} totalSteps={3} />
           
           <FormProvider {...methods}>
-            <form onSubmit={formStep === 3 ? handleSubmit(onSubmit) : (e) => { e.preventDefault(); nextStep(); }}>
+            <form onSubmit={formStep === 3 ? handleSubmit(onSubmit) : nextStep}>
               {renderStepContent()}
               
               <div className="flex justify-between mt-6">
