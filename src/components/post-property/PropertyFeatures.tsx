@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -22,9 +21,7 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ methods }) => {
               <FormLabel>Bedrooms</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={(value) => {
-                  field.onChange(value);
-                }}
+                onValueChange={field.onChange}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -52,9 +49,7 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ methods }) => {
               <FormLabel>Bathrooms</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={(value) => {
-                  field.onChange(value);
-                }}
+                onValueChange={field.onChange}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
@@ -81,9 +76,7 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ methods }) => {
               <FormLabel>Floor Number</FormLabel>
               <Select 
                 value={field.value} 
-                onValueChange={(value) => {
-                  field.onChange(value);
-                }}
+                onValueChange={field.onChange}
               >
                 <FormControl>
                   <SelectTrigger className="mt-1">
