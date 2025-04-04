@@ -20,8 +20,8 @@ interface MediaUploaderProps {
 const MediaUploader: React.FC<MediaUploaderProps> = ({ 
   onMediaChange, 
   initialMedia = [], 
-  maxImages = 10,
-  maxVideos = 5
+  maxImages = 20,  // Updated from 10 to 20
+  maxVideos = 8    // Updated from 5 to 8
 }) => {
   const [media, setMedia] = useState<MediaFile[]>(initialMedia);
   const [isUploading, setIsUploading] = useState(false);
@@ -31,6 +31,58 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   const imageCount = media.filter(item => item.type === 'image').length;
   const videoCount = media.filter(item => item.type === 'video').length;
+
+  // Function to optimize image before uploading
+  const optimizeImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      // For images that are too large, resize them
+      if (file.size > 2 * 1024 * 1024) { // If larger than 2MB
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        img.onload = () => {
+          // Calculate new dimensions (maintain aspect ratio)
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 1600; // Max width or height
+          
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+          
+          // Set canvas dimensions and draw resized image
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert canvas to blob
+          canvas.toBlob((blob) => {
+            if (blob) {
+              // Create a new file from the blob
+              const optimizedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(optimizedFile);
+            } else {
+              // If optimization fails, use the original file
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.85); // Compress with quality 0.85
+        };
+        
+        img.src = URL.createObjectURL(file);
+      } else {
+        // If file is already small enough, use it as is
+        resolve(file);
+      }
+    });
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -65,7 +117,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       // Process files one by one to track progress
       const uploadedMedia: MediaFile[] = [];
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        let file = files[i];
         const fileType = file.type.startsWith('image/') ? 'image' : 'video';
         
         // Validate file type
@@ -76,6 +128,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
             variant: "destructive",
           });
           continue;
+        }
+        
+        // Optimize image if it's an image file
+        if (fileType === 'image') {
+          file = await optimizeImage(file);
         }
         
         // Create a unique filename
@@ -161,6 +218,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                 src={item.url} 
                 alt={`Property image ${index + 1}`} 
                 className="h-full w-full object-cover"
+                loading="lazy" // Add lazy loading for better performance
               />
             ) : (
               <div 
@@ -171,6 +229,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
                   src={item.url} 
                   className="h-full w-full object-cover"
                   controls={false}
+                  preload="metadata" // Only load metadata for better performance
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Video className="text-white/80 h-10 w-10" />

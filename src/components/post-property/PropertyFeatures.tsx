@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -107,9 +108,7 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ methods }) => {
             <FormLabel>Area (sq ft)</FormLabel>
             <Select 
               value={field.value} 
-              onValueChange={(value) => {
-                field.onChange(value);
-              }}
+              onValueChange={field.onChange}
             >
               <FormControl>
                 <SelectTrigger className="mt-1">

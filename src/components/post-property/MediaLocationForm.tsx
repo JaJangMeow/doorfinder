@@ -39,8 +39,8 @@ const MediaLocationForm: React.FC<MediaLocationFormProps> = ({
           <MediaUploader 
             onMediaChange={onMediaChange}
             initialMedia={media}
-            maxImages={10}
-            maxVideos={5}
+            maxImages={20} // Updated from 10 to 20
+            maxVideos={8}  // Updated from 5 to 8
           />
         </div>
       </div>
