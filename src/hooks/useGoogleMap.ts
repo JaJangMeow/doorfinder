@@ -139,6 +139,7 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
               if (place.geometry?.location) {
                 const placeLocation = place.geometry.location;
                 const position = {
+                  // Fix: Use method calls instead of property access
                   lat: placeLocation.lat(),
                   lng: placeLocation.lng()
                 };

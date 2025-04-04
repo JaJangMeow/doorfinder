@@ -21,7 +21,8 @@ interface PropertyLocationProps {
   address: string;
 }
 
-const PropertyLocation: React.FC<PropertyLocationProps> = ({
+// Export as named export instead of default export
+export const PropertyLocation: React.FC<PropertyLocationProps> = ({
   latitude,
   longitude,
   address
@@ -139,5 +140,3 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     </div>
   );
 };
-
-export default PropertyLocation;

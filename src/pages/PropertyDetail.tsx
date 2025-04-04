@@ -2,7 +2,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import PropertyDetailComponent from "@/components/property-detail";
+import * as PropertyDetailComponents from "@/components/property-detail";
 import { getPropertyById } from "@/services/propertyService";
 import { useToast } from "@/hooks/use-toast";
 import TabBar from "@/components/TabBar";
@@ -98,7 +98,12 @@ const PropertyDetailPage: React.FC = () => {
     <div className="min-h-screen pb-16">
       <Navbar />
       <div className="pt-24 pb-16">
-        <PropertyDetailComponent property={processedProperty} />
+        {/* Use a named export component instead of default export */}
+        <PropertyDetailComponents.PropertyLocation 
+          latitude={processedProperty.latitude}
+          longitude={processedProperty.longitude}
+          address={processedProperty.address}
+        />
       </div>
       <TabBar />
     </div>

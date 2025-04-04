@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -47,7 +46,7 @@ export interface PropertyDetailData {
   restrictions?: string;
 }
 
-const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }) => {
+export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaved, setIsSaved] = useState(false);
@@ -55,12 +54,10 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Ensure Supabase storage is set up
   useEffect(() => {
     setupSupabaseStorage();
   }, []);
 
-  // Create a fallback image if no images or media are available
   const createFallbackMedia = (): MediaItem[] => {
     return [{
       url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
@@ -68,7 +65,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
     }];
   };
 
-  // Convert legacy images array to media format if needed
   const mediaItems: MediaItem[] = 
     property.media && property.media.length > 0 ? property.media : 
     property.images && property.images.length > 0 ? property.images.map(url => ({ url, type: 'image' as const })) : 
@@ -163,7 +159,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   return (
     <div className="container mx-auto px-4 md:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left column with images and main info */}
         <div className="lg:col-span-8">
           <PropertyMediaGallery 
             media={mediaItems} 
@@ -296,7 +291,6 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
           </div>
         </div>
         
-        {/* Right sticky column with key information */}
         <div className="lg:col-span-4">
           <div className="sticky top-24 space-y-6">
             <Card className="p-4 shadow-sm">
@@ -347,4 +341,16 @@ const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ property }
   );
 };
 
-export default PropertyDetail;
+export * from './PropertyDescription';
+export * from './PropertyFeatures';
+export * from './PropertyHeader';
+export * from './PropertyMediaGallery';
+export * from './ContactInformation';
+export * from './MapHeader';
+export * from './MapTabContent';
+export * from './SatelliteTabContent';
+export * from './StreetViewTabContent';
+export * from './NoLocationState';
+export * from './LocationFooter';
+export * from './MapErrorState';
+export { PropertyLocation } from './PropertyLocation';
