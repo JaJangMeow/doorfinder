@@ -98,7 +98,7 @@ const PropertyDetailPage: React.FC = () => {
     <div className="min-h-screen pb-16">
       <Navbar />
       <div className="pt-24 pb-16">
-        {/* Use a named export component instead of default export */}
+        {/* Use the named export component */}
         <PropertyDetailComponents.PropertyLocation 
           latitude={processedProperty.latitude}
           longitude={processedProperty.longitude}

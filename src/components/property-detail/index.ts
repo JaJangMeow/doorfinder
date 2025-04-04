@@ -12,4 +12,6 @@ export { default as StreetViewTabContent } from './StreetViewTabContent';
 export { default as NoLocationState } from './NoLocationState';
 export { default as LocationFooter } from './LocationFooter';
 export { default as MapErrorState } from './MapErrorState';
+
+// Re-export the PropertyDetail from the index.tsx file as a named export
 export { PropertyDetail } from './index.tsx';
