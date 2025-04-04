@@ -1,4 +1,3 @@
-
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 interface UseGoogleMapProps {
@@ -17,12 +16,10 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
     error: false
   });
 
-  // Memoize map initialization to prevent unnecessary re-renders
   const initializeMap = useCallback(() => {
     if (!mapRef.current || !window.google?.maps) return false;
     
     try {
-      // Create map instance if it doesn't exist
       if (!mapInstanceRef.current) {
         mapInstanceRef.current = new google.maps.Map(mapRef.current, {
           center: { lat: latitude, lng: longitude },
@@ -46,7 +43,6 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
           ]
         });
         
-        // Add marker with custom animation
         markerRef.current = new google.maps.Marker({
           position: { lat: latitude, lng: longitude },
           map: mapInstanceRef.current,
@@ -73,18 +69,15 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
     }
   }, [latitude, longitude]);
 
-  // Update map coordinates when lat/lng changes
   useEffect(() => {
     if (!googleMapsLoaded || !mapRef.current) return;
     
-    // Validate coordinates
     if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
       setMapState({ isReady: false, error: true });
       return;
     }
 
     if (mapInstanceRef.current) {
-      // Update existing map with new coordinates
       const center = new google.maps.LatLng(latitude, longitude);
       mapInstanceRef.current.setCenter(center);
       
@@ -92,12 +85,10 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
         markerRef.current.setPosition(center);
       }
     } else {
-      // Try to initialize map if it doesn't exist yet
       initializeMap();
     }
   }, [latitude, longitude, googleMapsLoaded, initializeMap]);
 
-  // Initialize map when dependencies change
   useEffect(() => {
     if (!googleMapsLoaded) return;
     
@@ -105,16 +96,13 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
       initializeMap();
     }
     
-    // Clean up on unmount
     return () => {
       if (markerRef.current) {
         markerRef.current.setMap(null);
       }
-      // Don't destroy the map instance to prevent flicker on re-renders
     };
   }, [googleMapsLoaded, initializeMap]);
 
-  // Function to retry map initialization
   const retryMapInitialization = useCallback(() => {
     if (markerRef.current) {
       markerRef.current.setMap(null);
@@ -124,13 +112,11 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
     mapInstanceRef.current = null;
     setMapState({ isReady: false, error: false });
     
-    // Try to initialize again
     setTimeout(() => {
       initializeMap();
     }, 100);
   }, [initializeMap]);
 
-  // Function to add places of interest around the property
   const addNearbyPlaces = useCallback((types: string[] = ['restaurant', 'school', 'transit_station']) => {
     if (!mapInstanceRef.current || !window.google?.maps || !markerRef.current) return;
     
@@ -151,7 +137,6 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
             results.slice(0, 5).forEach(place => {
               if (place.geometry?.location) {
                 const placeLocation = place.geometry.location;
-                // Convert LatLng object to the expected format
                 const position = {
                   lat: placeLocation.lat(),
                   lng: placeLocation.lng()
