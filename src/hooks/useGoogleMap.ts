@@ -150,9 +150,16 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
           if (status === google.maps.places.PlacesServiceStatus.OK && results) {
             results.slice(0, 5).forEach(place => {
               if (place.geometry?.location) {
+                const placeLocation = place.geometry.location;
+                // Convert LatLng object to the expected format
+                const position = {
+                  lat: placeLocation.lat(),
+                  lng: placeLocation.lng()
+                };
+                
                 new google.maps.Marker({
                   map: mapInstanceRef.current,
-                  position: place.geometry.location,
+                  position,
                   title: place.name,
                   icon: {
                     url: place.icon || '',
