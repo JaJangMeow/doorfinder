@@ -84,6 +84,17 @@ const Index: React.FC = () => {
   const handleToggleMapFullscreen = useCallback(() => {
     setIsMapFullscreen(prev => !prev);
   }, []);
+
+  // Handler for the "Explore Map" button click
+  const handleExploreMap = useCallback(() => {
+    const mapSection = document.getElementById('map-view');
+    if (mapSection) {
+      mapSection.scrollIntoView({
+        behavior: 'smooth'
+      });
+      setViewMode('map');
+    }
+  }, []);
   
   return (
     <div className="min-h-screen pb-16 overflow-x-hidden">
@@ -121,15 +132,7 @@ const Index: React.FC = () => {
                 variant="outline" 
                 size="lg" 
                 iconLeft={<Map size={18} />}
-                onClick={() => {
-                  const mapSection = document.getElementById('map-view');
-                  if (mapSection) {
-                    mapSection.scrollIntoView({
-                      behavior: 'smooth'
-                    });
-                    setViewMode('map');
-                  }
-                }}
+                onClick={handleExploreMap}
                 className="backdrop-blur-sm bg-white/70"
               >
                 Explore Map
@@ -214,6 +217,7 @@ const Index: React.FC = () => {
                     userLocation={userLocation}
                     isFullscreen={isMapFullscreen}
                     onToggleFullscreen={handleToggleMapFullscreen}
+                    showAllPropertiesOnLoad={true}
                   />
                 </div>
               )}

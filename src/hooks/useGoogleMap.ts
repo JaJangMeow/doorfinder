@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 interface UseGoogleMapProps {
@@ -161,6 +162,7 @@ export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogl
 
   return {
     mapRef,
+    mapInstance: mapInstanceRef.current,
     isReady: mapState.isReady,
     error: mapState.error,
     retryMapInitialization,

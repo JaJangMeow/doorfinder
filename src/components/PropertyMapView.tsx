@@ -16,6 +16,7 @@ interface PropertyMapViewProps {
   onClose?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  showAllPropertiesOnLoad?: boolean;
 }
 
 const PropertyMapView: React.FC<PropertyMapViewProps> = ({
@@ -24,6 +25,7 @@ const PropertyMapView: React.FC<PropertyMapViewProps> = ({
   onClose,
   isFullscreen = false,
   onToggleFullscreen,
+  showAllPropertiesOnLoad = false,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -141,6 +143,13 @@ const PropertyMapView: React.FC<PropertyMapViewProps> = ({
             'heatmap-opacity': 0.7
           }
         });
+
+        // If showAllPropertiesOnLoad is true, fit map to show all markers and user location
+        if (showAllPropertiesOnLoad) {
+          setTimeout(() => {
+            handleFitMapToProperties();
+          }, 500);
+        }
       });
 
       // Clean up on unmount
@@ -157,7 +166,7 @@ const PropertyMapView: React.FC<PropertyMapViewProps> = ({
         variant: "destructive"
       });
     }
-  }, [defaultCenter, properties, toast]);
+  }, [defaultCenter, properties, toast, showAllPropertiesOnLoad]);
 
   // Initialize map on mount
   useEffect(() => {
@@ -439,10 +448,22 @@ const PropertyMapView: React.FC<PropertyMapViewProps> = ({
       });
 
       console.log("Map fitted to show all properties");
+      
+      toast({
+        title: "Map updated",
+        description: `Showing ${validProperties.length} properties${userLocation ? ' and your location' : ''}`,
+      });
     } catch (error) {
       console.error("Error fitting map to properties:", error);
     }
-  }, [mapInitialized, properties, userLocation]);
+  }, [mapInitialized, properties, userLocation, toast]);
+
+  // Automatically fit map to properties when component mounts and whenever properties or user location changes
+  useEffect(() => {
+    if (mapInitialized && showAllPropertiesOnLoad) {
+      handleFitMapToProperties();
+    }
+  }, [mapInitialized, showAllPropertiesOnLoad, handleFitMapToProperties]);
 
   // Manage map size on fullscreen toggle
   useEffect(() => {
