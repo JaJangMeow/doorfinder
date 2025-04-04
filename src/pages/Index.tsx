@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +8,7 @@ import TabBar from "@/components/TabBar";
 import { Building, ChevronDown, Search, Map, Grid } from "lucide-react";
 import { getProperties } from "@/services/propertyService";
 import { useToast } from "@/components/ui/use-toast";
-import PropertyMapView from "@/components/PropertyMapView";
+import { PropertyMapView } from "@/components/map";
 import DownloadAppButton from "@/components/DownloadAppButton";
 
 const Index: React.FC = () => {
@@ -30,7 +29,6 @@ const Index: React.FC = () => {
     staleTime: 60000, // 1 minute
   });
   
-  // Get user's location when component mounts
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -48,7 +46,6 @@ const Index: React.FC = () => {
     }
   }, []);
 
-  // Parallax scroll effect for hero section
   useEffect(() => {
     const handleScroll = () => {
       if (heroRef.current) {
@@ -57,10 +54,7 @@ const Index: React.FC = () => {
         const heroContent = heroRef.current.querySelector('.hero-content') as HTMLElement | null;
         
         if (heroImg && heroContent) {
-          // Parallax effect for background image
           heroImg.style.transform = `translateY(${scrollY * 0.4}px)`;
-          
-          // Fade out hero content on scroll
           const opacity = 1 - (scrollY / 400);
           heroContent.style.opacity = opacity > 0 ? String(opacity) : '0';
         }
@@ -70,7 +64,7 @@ const Index: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
+
   React.useEffect(() => {
     if (error) {
       toast({
@@ -85,7 +79,6 @@ const Index: React.FC = () => {
     setIsMapFullscreen(prev => !prev);
   }, []);
 
-  // Handler for the "Explore Map" button click
   const handleExploreMap = useCallback(() => {
     const mapSection = document.getElementById('map-view');
     if (mapSection) {
@@ -95,12 +88,11 @@ const Index: React.FC = () => {
       setViewMode('map');
     }
   }, []);
-  
+
   return (
     <div className="min-h-screen pb-16 overflow-x-hidden">
       <Navbar />
       
-      {/* Hero Section with Dynamic Background and Enhanced CTA */}
       <section ref={heroRef} className="relative min-h-[90vh] flex items-center">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-background z-10" />
@@ -139,7 +131,6 @@ const Index: React.FC = () => {
               </Button>
             </div>
             
-            {/* Download App Button */}
             <div className="mt-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
               <DownloadAppButton />
             </div>
@@ -160,7 +151,6 @@ const Index: React.FC = () => {
         </div>
       </section>
       
-      {/* Featured Properties Section with View Toggle */}
       <section id="featured-properties" className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
@@ -200,7 +190,6 @@ const Index: React.FC = () => {
             )
           ) : properties && properties.length > 0 ? (
             <>
-              {/* Grid View */}
               {viewMode === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
                   {properties.slice(0, 6).map((property) => (
@@ -209,7 +198,6 @@ const Index: React.FC = () => {
                 </div>
               )}
               
-              {/* Map View */}
               {viewMode === 'map' && (
                 <div id="map-view" className="h-[500px]">
                   <PropertyMapView 
@@ -234,7 +222,6 @@ const Index: React.FC = () => {
         </div>
       </section>
       
-      {/* CTA Section - Enhanced */}
       <section className="py-16 bg-primary/10">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to find your perfect space?</h2>
@@ -262,14 +249,12 @@ const Index: React.FC = () => {
             </Button>
           </div>
           
-          {/* Download App Button */}
           <div className="mt-6">
             <DownloadAppButton />
           </div>
         </div>
       </section>
       
-      {/* Footer */}
       <footer className="bg-white py-8 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
@@ -278,7 +263,6 @@ const Index: React.FC = () => {
         </div>
       </footer>
 
-      {/* TabBar */}
       <TabBar />
     </div>
   );
