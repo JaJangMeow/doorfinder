@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -7,7 +8,7 @@ import PropertyHeader from './PropertyHeader';
 import PropertyFeatures from './PropertyFeatures';
 import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
-import PropertyLocation from './PropertyLocation';
+import { PropertyLocation } from './PropertyLocation'; // Fixed import to use named import
 import { setupSupabaseStorage } from '@/lib/supabase-setup';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
