@@ -11,8 +11,7 @@ export { default as SatelliteTabContent } from './SatelliteTabContent';
 export { default as StreetViewTabContent } from './StreetViewTabContent';
 export { default as NoLocationState } from './NoLocationState';
 export { default as LocationFooter } from './LocationFooter';
-export { default as MapErrorState } from './MapErrorState';
-
-// Export the PropertyDetail component from the module file directly
-// This avoids circular dependencies
-export { PropertyDetail } from './index.tsx';
+export { default as PropertyTabs } from './PropertyTabs';
+export { default as PropertySidebar } from './PropertySidebar';
+export { default as PropertyDetail } from './PropertyDetail';
+export type { PropertyDetailData, MediaItem } from './types';

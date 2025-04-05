@@ -43,7 +43,7 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
   const { 
     mapRef, 
     isReady, 
-    error,
+    error: mapError, // Renamed to avoid conflict with boolean prop
     retryMapInitialization,
     addNearbyPlaces
   } = useGoogleMap({
@@ -105,7 +105,7 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
               <MapTabContent 
                 mapRef={mapRef}
                 isReady={isReady}
-                error={error}
+                error={!!mapError} // Convert to boolean
                 retryMapInitialization={retryMapInitialization}
                 showNearbyPlaces={showNearbyPlaces}
                 onShowNearbyPlaces={handleShowNearbyPlaces}

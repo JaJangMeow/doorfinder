@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface UseGoogleMapProps {
@@ -31,7 +32,7 @@ export const useGoogleMap = ({
   const mapOptions: google.maps.MapOptions = {
     center: { lat: latitude || defaultLocation.lat, lng: longitude || defaultLocation.lng },
     zoom: 15,
-    mapId: 'YOUR_MAP_ID',
+    // mapId is not a valid property in the type definition
     gestureHandling: 'cooperative',
     mapTypeControl: false,
     streetViewControl: false,
@@ -80,17 +81,29 @@ export const useGoogleMap = ({
 
     const service = new google.maps.places.PlacesService(map);
     const location = new google.maps.LatLng(latitude || defaultLocation.lat, longitude || defaultLocation.lng);
+    
+    // Fix the request object to match the expected types
     const request = {
       location: location,
-      radius: '500',
-      type: ['restaurant', 'school', 'transit_station'],
+      radius: 500, // Changed from string to number
+      type: 'restaurant' // Changed from array to string to match API expectations
     };
 
     service.nearbySearch(request, (results, status) => {
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        const nearby = results.map(result => {
+        // Type assertion to work with the actual Google Maps API response
+        const typedResults = results as unknown as Array<{
+          name?: string;
+          rating?: number;
+          user_ratings_total?: number;
+          vicinity?: string;
+          types?: string[];
+          geometry?: { location: google.maps.LatLng };
+        }>;
+        
+        const nearby = typedResults.map(result => {
           return {
-            name: result.name,
+            name: result.name || 'Unnamed Place',
             rating: result.rating || 0,
             user_ratings_total: result.user_ratings_total || 0,
             vicinity: result.vicinity || 'No address provided',
@@ -100,19 +113,25 @@ export const useGoogleMap = ({
         setNearbyPlaces(nearby);
 
         // Add markers for nearby places
-        results.forEach(result => {
+        typedResults.forEach(result => {
           if (result.geometry && result.geometry.location) {
+            const position = {
+              lat: result.geometry.location.lat(),
+              lng: result.geometry.location.lng()
+            };
+            
             const marker = new google.maps.Marker({
-              position: result.geometry.location,
+              position: position,
               map: map,
               title: result.name,
             });
 
-            // Add info window for each marker
+            // Add info window for each marker using the correct Google Maps class
             const infowindow = new google.maps.InfoWindow({
-              content: `<b>${result.name}</b><br>${result.vicinity || 'No address provided'}`
+              content: `<b>${result.name || ''}</b><br>${result.vicinity || 'No address provided'}`
             });
 
+            // Use the correct method for adding an event listener
             marker.addListener('click', () => {
               infowindow.open(map, marker);
             });
@@ -122,7 +141,7 @@ export const useGoogleMap = ({
         });
       }
     });
-  }, [latitude, longitude, map]);
+  }, [latitude, longitude, map, defaultLocation.lat, defaultLocation.lng]);
 
   // Cleanup markers on unmount
   useEffect(() => {
