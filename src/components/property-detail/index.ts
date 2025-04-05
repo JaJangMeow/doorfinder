@@ -13,5 +13,6 @@ export { default as NoLocationState } from './NoLocationState';
 export { default as LocationFooter } from './LocationFooter';
 export { default as MapErrorState } from './MapErrorState';
 
-// Re-export the PropertyDetail component
+// Export the PropertyDetail component from the module file directly
+// This avoids circular dependencies
 export { PropertyDetail } from './index.tsx';

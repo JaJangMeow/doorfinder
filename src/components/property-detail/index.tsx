@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -8,7 +7,7 @@ import PropertyHeader from './PropertyHeader';
 import PropertyFeatures from './PropertyFeatures';
 import PropertyDescription from './PropertyDescription';
 import ContactInformation from './ContactInformation';
-import { PropertyLocation } from './PropertyLocation'; // Fixed import to use named import
+import { PropertyLocation } from './PropertyLocation';
 import { setupSupabaseStorage } from '@/lib/supabase-setup';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -341,17 +340,3 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
     </div>
   );
 };
-
-export * from './PropertyDescription';
-export * from './PropertyFeatures';
-export * from './PropertyHeader';
-export * from './PropertyMediaGallery';
-export * from './ContactInformation';
-export * from './MapHeader';
-export * from './MapTabContent';
-export * from './SatelliteTabContent';
-export * from './StreetViewTabContent';
-export * from './NoLocationState';
-export * from './LocationFooter';
-export * from './MapErrorState';
-export { PropertyLocation } from './PropertyLocation';

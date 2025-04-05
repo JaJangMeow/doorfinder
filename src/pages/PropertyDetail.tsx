@@ -2,7 +2,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import * as PropertyDetailComponents from "@/components/property-detail";
+import { PropertyDetail } from "@/components/property-detail"; // Import as named export
 import { getPropertyById } from "@/services/propertyService";
 import { useToast } from "@/hooks/use-toast";
 import TabBar from "@/components/TabBar";
@@ -81,29 +81,12 @@ const PropertyDetailPage: React.FC = () => {
       Number(property.longitude) : undefined
   };
 
-  // Check if coordinates are valid for debug purposes
-  const hasValidCoordinates = 
-    processedProperty.latitude !== undefined && 
-    processedProperty.longitude !== undefined && 
-    !isNaN(processedProperty.latitude) && 
-    !isNaN(processedProperty.longitude);
-
-  console.log('PropertyDetailPage - Property coordinates:', { 
-    latitude: processedProperty.latitude, 
-    longitude: processedProperty.longitude,
-    hasValidCoordinates
-  });
-
   return (
     <div className="min-h-screen pb-16">
       <Navbar />
       <div className="pt-24 pb-16">
-        {/* Use the named export component */}
-        <PropertyDetailComponents.PropertyLocation 
-          latitude={processedProperty.latitude}
-          longitude={processedProperty.longitude}
-          address={processedProperty.address}
-        />
+        {/* Render the full PropertyDetail component instead of just the map */}
+        <PropertyDetail property={processedProperty} />
       </div>
       <TabBar />
     </div>

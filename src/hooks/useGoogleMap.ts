@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface UseGoogleMapProps {
   latitude: number;
@@ -6,165 +6,139 @@ interface UseGoogleMapProps {
   googleMapsLoaded: boolean;
 }
 
-export const useGoogleMap = ({ latitude, longitude, googleMapsLoaded }: UseGoogleMapProps) => {
+interface NearbyPlace {
+  name: string;
+  rating: number;
+  user_ratings_total: number;
+  vicinity: string;
+  types: string[];
+}
+
+export const useGoogleMap = ({
+  latitude,
+  longitude,
+  googleMapsLoaded
+}: UseGoogleMapProps) => {
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
-  
-  const [mapState, setMapState] = useState({
-    isReady: false,
-    error: false
-  });
+
+  const defaultLocation = { lat: 40.7128, lng: -74.0060 }; // New York coordinates as default
+
+  const mapOptions: google.maps.MapOptions = {
+    center: { lat: latitude || defaultLocation.lat, lng: longitude || defaultLocation.lng },
+    zoom: 15,
+    mapId: 'YOUR_MAP_ID',
+    gestureHandling: 'cooperative',
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+  };
 
   const initializeMap = useCallback(() => {
-    if (!mapRef.current || !window.google?.maps) return false;
-    
-    try {
-      if (!mapInstanceRef.current) {
-        mapInstanceRef.current = new google.maps.Map(mapRef.current, {
-          center: { lat: latitude, lng: longitude },
-          zoom: 15,
-          mapTypeControl: true,
-          fullscreenControl: true,
-          streetViewControl: true,
-          zoomControl: true,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'on' }]
-            },
-            {
-              featureType: 'transit',
-              elementType: 'labels',
-              stylers: [{ visibility: 'on' }]
-            }
-          ]
-        });
-        
-        markerRef.current = new google.maps.Marker({
-          position: { lat: latitude, lng: longitude },
-          map: mapInstanceRef.current,
-          title: 'Property Location',
-          animation: google.maps.Animation.DROP,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#ff3e00',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#ffffff',
-          }
-        });
-        
-        setMapState({ isReady: true, error: false });
-        return true;
-      }
-      return true;
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setMapState({ isReady: false, error: true });
-      return false;
-    }
-  }, [latitude, longitude]);
-
-  useEffect(() => {
     if (!googleMapsLoaded || !mapRef.current) return;
-    
-    if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-      setMapState({ isReady: false, error: true });
-      return;
-    }
 
-    if (mapInstanceRef.current) {
-      const center = new google.maps.LatLng(latitude, longitude);
-      mapInstanceRef.current.setCenter(center);
-      
-      if (markerRef.current) {
-        markerRef.current.setPosition(center);
-      }
-    } else {
-      initializeMap();
+    try {
+      const newMap = new google.maps.Map(mapRef.current, mapOptions);
+
+      setMap(newMap);
+      setIsReady(true);
+      setError(null);
+
+      // Add a single marker for the property location
+      const propertyMarker = new google.maps.Marker({
+        position: { lat: latitude || defaultLocation.lat, lng: longitude || defaultLocation.lng },
+        map: newMap,
+        title: 'Property Location',
+      });
+
+      setMarkers([propertyMarker]);
+    } catch (err: any) {
+      console.error("Failed to initialize map:", err);
+      setError("Failed to initialize map. Please check your connection and try again.");
+      setIsReady(false);
     }
-  }, [latitude, longitude, googleMapsLoaded, initializeMap]);
+  }, [googleMapsLoaded, latitude, longitude, mapOptions]);
 
   useEffect(() => {
-    if (!googleMapsLoaded) return;
-    
-    if (!mapInstanceRef.current) {
+    if (googleMapsLoaded && mapRef.current) {
       initializeMap();
     }
-    
-    return () => {
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
-      }
+  }, [googleMapsLoaded, latitude, longitude, initializeMap]);
+
+  const retryMapInitialization = () => {
+    setIsReady(false);
+    setError(null);
+    initializeMap();
+  };
+
+  const addNearbyPlaces = useCallback(() => {
+    if (!map) return;
+
+    const service = new google.maps.places.PlacesService(map);
+    const location = new google.maps.LatLng(latitude || defaultLocation.lat, longitude || defaultLocation.lng);
+    const request = {
+      location: location,
+      radius: '500',
+      type: ['restaurant', 'school', 'transit_station'],
     };
-  }, [googleMapsLoaded, initializeMap]);
 
-  const retryMapInitialization = useCallback(() => {
-    if (markerRef.current) {
-      markerRef.current.setMap(null);
-      markerRef.current = null;
-    }
-    
-    mapInstanceRef.current = null;
-    setMapState({ isReady: false, error: false });
-    
-    setTimeout(() => {
-      initializeMap();
-    }, 100);
-  }, [initializeMap]);
+    service.nearbySearch(request, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        const nearby = results.map(result => {
+          return {
+            name: result.name,
+            rating: result.rating || 0,
+            user_ratings_total: result.user_ratings_total || 0,
+            vicinity: result.vicinity || 'No address provided',
+            types: result.types || [],
+          };
+        });
+        setNearbyPlaces(nearby);
 
-  const addNearbyPlaces = useCallback((types: string[] = ['restaurant', 'school', 'transit_station']) => {
-    if (!mapInstanceRef.current || !window.google?.maps || !markerRef.current) return;
-    
-    const location = markerRef.current.getPosition();
-    if (!location) return;
-    
-    const service = new google.maps.places.PlacesService(mapInstanceRef.current);
-    
-    types.forEach(type => {
-      service.nearbySearch(
-        {
-          location,
-          radius: 500,
-          type
-        },
-        (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-            results.slice(0, 5).forEach(place => {
-              if (place.geometry?.location) {
-                const placeLocation = place.geometry.location;
-                const position = {
-                  lat: placeLocation.lat(),
-                  lng: placeLocation.lng()
-                };
-                
-                new google.maps.Marker({
-                  map: mapInstanceRef.current,
-                  position,
-                  title: place.name,
-                  icon: {
-                    url: place.icon || '',
-                    scaledSize: new google.maps.Size(20, 20)
-                  }
-                });
-              }
+        // Add markers for nearby places
+        results.forEach(result => {
+          if (result.geometry && result.geometry.location) {
+            const marker = new google.maps.Marker({
+              position: result.geometry.location,
+              map: map,
+              title: result.name,
             });
+
+            // Add info window for each marker
+            const infowindow = new google.maps.InfoWindow({
+              content: `<b>${result.name}</b><br>${result.vicinity || 'No address provided'}`
+            });
+
+            marker.addListener('click', () => {
+              infowindow.open(map, marker);
+            });
+
+            setMarkers(prevMarkers => [...prevMarkers, marker]);
           }
-        }
-      );
+        });
+      }
     });
-  }, []);
+  }, [latitude, longitude, map]);
+
+  // Cleanup markers on unmount
+  useEffect(() => {
+    return () => {
+      markers.forEach(marker => marker.setMap(null));
+      setMarkers([]);
+    };
+  }, [markers]);
 
   return {
     mapRef,
-    mapInstance: mapInstanceRef.current,
-    isReady: mapState.isReady,
-    error: mapState.error,
+    map,
+    isReady,
+    error,
     retryMapInitialization,
-    addNearbyPlaces
+    addNearbyPlaces,
+    nearbyPlaces
   };
 };
