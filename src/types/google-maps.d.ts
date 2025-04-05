@@ -6,6 +6,7 @@ declare global {
       setCenter(latLng: LatLng | { lat: number; lng: number }): void;
       setStyle(style: string): void;
       fitBounds(bounds: LatLngBounds): void;
+      getCenter(): LatLng | null;
     }
 
     class Marker {
@@ -81,10 +82,6 @@ declare global {
     enum Animation {
       DROP = 1,
       BOUNCE = 2
-    }
-
-    class Size {
-      constructor(width: number, height: number);
     }
 
     namespace places {
