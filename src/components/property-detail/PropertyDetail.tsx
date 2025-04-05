@@ -7,6 +7,7 @@ import PropertyMediaGallery from './PropertyMediaGallery';
 import PropertyHeader from './PropertyHeader';
 import PropertyTabs from './PropertyTabs';
 import PropertySidebar from './PropertySidebar';
+import PropertyBreadcrumb from './PropertyBreadcrumb';
 import { setupSupabaseStorage } from '@/lib/supabase-setup';
 import { PropertyDetailData, MediaItem } from './types';
 
@@ -121,6 +122,8 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-6">
+      <PropertyBreadcrumb propertyTitle={property.title} />
+      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8">
           <PropertyMediaGallery 

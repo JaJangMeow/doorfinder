@@ -14,4 +14,5 @@ export { default as LocationFooter } from './LocationFooter';
 export { default as PropertyTabs } from './PropertyTabs';
 export { default as PropertySidebar } from './PropertySidebar';
 export { default as PropertyDetail } from './PropertyDetail';
+export { default as PropertyBreadcrumb } from './PropertyBreadcrumb';
 export type { PropertyDetailData, MediaItem } from './types';

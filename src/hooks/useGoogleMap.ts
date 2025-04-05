@@ -1,163 +1,119 @@
+import { useState, useEffect, useRef } from 'react';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-
-interface UseGoogleMapProps {
+interface Property {
+  id: string;
   latitude: number;
   longitude: number;
-  googleMapsLoaded: boolean;
+  title: string;
+  address: string;
+  imageUrl: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  availableFrom: string;
+  hasHall?: boolean;
+  hasSeparateKitchen?: boolean;
 }
 
-interface NearbyPlace {
-  name: string;
-  rating: number;
-  user_ratings_total: number;
-  vicinity: string;
-  types: string[];
+interface UseGoogleMapProps {
+  properties: Property[];
+  userLocation: { lat: number; lng: number } | null;
 }
 
-export const useGoogleMap = ({
-  latitude,
-  longitude,
-  googleMapsLoaded
-}: UseGoogleMapProps) => {
+const useGoogleMap = ({ properties, userLocation }: UseGoogleMapProps) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-
-  const defaultLocation = { lat: 40.7128, lng: -74.0060 }; // New York coordinates as default
-
-  const mapOptions: google.maps.MapOptions = {
-    center: { lat: latitude || defaultLocation.lat, lng: longitude || defaultLocation.lng },
-    zoom: 15,
-    // mapId is not a valid property in the type definition
-    gestureHandling: 'cooperative',
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-  };
-
-  const initializeMap = useCallback(() => {
-    if (!googleMapsLoaded || !mapRef.current) return;
-
-    try {
-      const newMap = new google.maps.Map(mapRef.current, mapOptions);
-
-      setMap(newMap);
-      setIsReady(true);
-      setError(null);
-
-      // Add a single marker for the property location
-      const propertyMarker = new google.maps.Marker({
-        position: { lat: latitude || defaultLocation.lat, lng: longitude || defaultLocation.lng },
-        map: newMap,
-        title: 'Property Location',
-      });
-
-      setMarkers([propertyMarker]);
-    } catch (err: any) {
-      console.error("Failed to initialize map:", err);
-      setError("Failed to initialize map. Please check your connection and try again.");
-      setIsReady(false);
-    }
-  }, [googleMapsLoaded, latitude, longitude, mapOptions]);
+  const mapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (googleMapsLoaded && mapRef.current) {
-      initializeMap();
+    const loadMap = async () => {
+      if (!mapRef.current) return;
+
+      const google = window.google;
+      const mapOptions: google.maps.MapOptions = {
+        center: userLocation ? new google.maps.LatLng(userLocation.lat, userLocation.lng) : { lat: 0, lng: 0 },
+        zoom: userLocation ? 12 : 2,
+        mapTypeId: 'roadmap',
+      };
+
+      const newMap = new google.maps.Map(mapRef.current, mapOptions);
+      setMap(newMap);
+    };
+
+    if (window.google) {
+      loadMap();
+    } else {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = loadMap;
+      document.head.appendChild(script);
     }
-  }, [googleMapsLoaded, latitude, longitude, initializeMap]);
+  }, [userLocation]);
 
-  const retryMapInitialization = () => {
-    setIsReady(false);
-    setError(null);
-    initializeMap();
-  };
-
-  const addNearbyPlaces = useCallback(() => {
+  useEffect(() => {
     if (!map) return;
 
-    const service = new google.maps.places.PlacesService(map);
-    const location = new google.maps.LatLng(latitude || defaultLocation.lat, longitude || defaultLocation.lng);
-    
-    // Fix the request object to match the expected types
-    const request = {
-      location: location,
-      radius: 500, // Changed from string to number
-      type: 'restaurant' // Changed from array to string to match API expectations
+    const google = window.google;
+
+    const createMarker = (property: Property) => {
+      const propertyLatLng = new google.maps.LatLng(
+        property.latitude,
+        property.longitude
+      );
+
+      const marker = new google.maps.Marker({
+        position: propertyLatLng,
+        map: map,
+        title: property.title,
+      });
+
+      const contentString = `
+        <div style="display: flex; flex-direction: column; align-items: flex-start; width: 250px;">
+          <img src="${property.imageUrl}" alt="${property.title}" style="width: 100%; height: auto; margin-bottom: 8px;">
+          <h3 style="font-size: 1.2em; margin-bottom: 4px;">${property.title}</h3>
+          <p style="font-size: 1em; margin-bottom: 4px;">${property.address}</p>
+          <p style="font-size: 1.1em; font-weight: bold; margin-bottom: 8px;">₹${property.price}/month</p>
+          <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px;">
+            <span>Bedrooms: ${property.bedrooms}</span>
+            <span>Bathrooms: ${property.bathrooms}</span>
+          </div>
+          <a href="/property/${property.id}" style="color: #007bff; text-decoration: none;">View Details</a>
+        </div>
+      `;
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: contentString
+      });
+      
+      marker.addListener("click", () => {
+        infoWindow.open({
+          anchor: marker,
+          map: mapRef.current
+        });
+      });
+      
+      return marker;
     };
 
-    service.nearbySearch(request, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        // Type assertion to work with the actual Google Maps API response
-        const typedResults = results as unknown as Array<{
-          name?: string;
-          rating?: number;
-          user_ratings_total?: number;
-          vicinity?: string;
-          types?: string[];
-          geometry?: { location: google.maps.LatLng };
-        }>;
-        
-        const nearby = typedResults.map(result => {
-          return {
-            name: result.name || 'Unnamed Place',
-            rating: result.rating || 0,
-            user_ratings_total: result.user_ratings_total || 0,
-            vicinity: result.vicinity || 'No address provided',
-            types: result.types || [],
-          };
-        });
-        setNearbyPlaces(nearby);
-
-        // Add markers for nearby places
-        typedResults.forEach(result => {
-          if (result.geometry && result.geometry.location) {
-            const position = {
-              lat: result.geometry.location.lat(),
-              lng: result.geometry.location.lng()
-            };
-            
-            const marker = new google.maps.Marker({
-              position: position,
-              map: map,
-              title: result.name,
-            });
-
-            // Add info window for each marker using the correct Google Maps class
-            const infowindow = new google.maps.InfoWindow({
-              content: `<b>${result.name || ''}</b><br>${result.vicinity || 'No address provided'}`
-            });
-
-            // Use the correct method for adding an event listener
-            marker.addListener('click', () => {
-              infowindow.open(map, marker);
-            });
-
-            setMarkers(prevMarkers => [...prevMarkers, marker]);
-          }
-        });
+    const bounds = new google.maps.LatLngBounds();
+    properties.forEach(property => {
+      if (property.latitude && property.longitude) {
+        const marker = createMarker(property);
+        const propertyLatLng = new google.maps.LatLng(
+          property.latitude,
+          property.longitude
+        );
+        bounds.extend(propertyLatLng);
       }
     });
-  }, [latitude, longitude, map, defaultLocation.lat, defaultLocation.lng]);
 
-  // Cleanup markers on unmount
-  useEffect(() => {
-    return () => {
-      markers.forEach(marker => marker.setMap(null));
-      setMarkers([]);
-    };
-  }, [markers]);
+    if (properties.length > 0) {
+      map.fitBounds(bounds);
+    }
+  }, [map, properties]);
 
-  return {
-    mapRef,
-    map,
-    isReady,
-    error,
-    retryMapInitialization,
-    addNearbyPlaces,
-    nearbyPlaces
-  };
+  return { mapRef };
 };
+
+export default useGoogleMap;
