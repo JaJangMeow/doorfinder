@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 
 interface Property {
@@ -30,7 +31,7 @@ const useGoogleMap = ({ properties, userLocation }: UseGoogleMapProps) => {
 
       const google = window.google;
       const mapOptions: google.maps.MapOptions = {
-        center: userLocation ? new google.maps.LatLng(userLocation.lat, userLocation.lng) : { lat: 0, lng: 0 },
+        center: userLocation || { lat: 0, lng: 0 },
         zoom: userLocation ? 12 : 2,
         mapTypeId: 'roadmap',
       };
@@ -57,10 +58,10 @@ const useGoogleMap = ({ properties, userLocation }: UseGoogleMapProps) => {
     const google = window.google;
 
     const createMarker = (property: Property) => {
-      const propertyLatLng = new google.maps.LatLng(
-        property.latitude,
-        property.longitude
-      );
+      const propertyLatLng = { 
+        lat: property.latitude, 
+        lng: property.longitude 
+      };
 
       const marker = new google.maps.Marker({
         position: propertyLatLng,
@@ -89,7 +90,7 @@ const useGoogleMap = ({ properties, userLocation }: UseGoogleMapProps) => {
       marker.addListener("click", () => {
         infoWindow.open({
           anchor: marker,
-          map: mapRef.current
+          map
         });
       });
       
@@ -100,11 +101,10 @@ const useGoogleMap = ({ properties, userLocation }: UseGoogleMapProps) => {
     properties.forEach(property => {
       if (property.latitude && property.longitude) {
         const marker = createMarker(property);
-        const propertyLatLng = new google.maps.LatLng(
-          property.latitude,
-          property.longitude
-        );
-        bounds.extend(propertyLatLng);
+        bounds.extend({ 
+          lat: property.latitude, 
+          lng: property.longitude 
+        });
       }
     });
 

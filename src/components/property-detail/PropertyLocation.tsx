@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Map, Compass, Navigation } from 'lucide-react';
 import { useGoogleMapsScript } from '@/hooks/useGoogleMapsScript';
-import { useGoogleMap } from '@/hooks/useGoogleMap';
+import useGoogleMap from '@/hooks/useGoogleMap'; // Fixed import statement
 
 // Import smaller components
 import MapHeader from './MapHeader';
