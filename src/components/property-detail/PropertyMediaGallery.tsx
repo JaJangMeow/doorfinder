@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Heart, ChevronLeft, ChevronRight, Play, Pause, X, Maximize, Minimize, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,11 +35,48 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   const [fullscreen, setFullscreen] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
+  const [preloadedImages, setPreloadedImages] = useState<Record<number, boolean>>({});
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Filter out invalid media
   const validMedia = media.filter(item => item.url && (item.type === 'image' || item.type === 'video'));
+
+  const preloadImages = useCallback(() => {
+    const preloadState: Record<number, boolean> = {};
+    
+    validMedia.forEach((item, index) => {
+      if (item.type === 'image') {
+        preloadState[index] = false;
+        const img = new Image();
+        img.onload = () => {
+          setPreloadedImages(prev => ({...prev, [index]: true}));
+        };
+        img.onerror = () => {
+          console.error(`Failed to preload image at index ${index}`);
+        };
+        img.src = item.url;
+      }
+    });
+    
+    setPreloadedImages(preloadState);
+  }, [validMedia]);
+
+  const preloadAdjacentImages = useCallback((index: number) => {
+    if (validMedia.length <= 1) return;
+    
+    const prevIndex = index === 0 ? validMedia.length - 1 : index - 1;
+    const nextIndex = index === validMedia.length - 1 ? 0 : index + 1;
+    
+    [prevIndex, nextIndex].forEach(idx => {
+      if (validMedia[idx]?.type === 'image' && !preloadedImages[idx]) {
+        const img = new Image();
+        img.onload = () => {
+          setPreloadedImages(prev => ({...prev, [idx]: true}));
+        };
+        img.src = validMedia[idx].url;
+      }
+    });
+  }, [validMedia, preloadedImages]);
 
   const pauseCurrentVideo = useCallback(() => {
     if (validMedia[currentIndex]?.type === 'video') {
@@ -54,17 +90,25 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
 
   const handlePrevious = useCallback(() => {
     pauseCurrentVideo();
-    setCurrentIndex(prevIndex => 
-      prevIndex === 0 ? validMedia.length - 1 : prevIndex - 1
-    );
-  }, [validMedia.length, pauseCurrentVideo]);
+    setCurrentIndex(prevIndex => {
+      const newIndex = prevIndex === 0 ? validMedia.length - 1 : prevIndex - 1;
+      if (fullscreen) {
+        preloadAdjacentImages(newIndex);
+      }
+      return newIndex;
+    });
+  }, [validMedia.length, pauseCurrentVideo, fullscreen, preloadAdjacentImages]);
 
   const handleNext = useCallback(() => {
     pauseCurrentVideo();
-    setCurrentIndex(prevIndex => 
-      prevIndex === validMedia.length - 1 ? 0 : prevIndex + 1
-    );
-  }, [validMedia.length, pauseCurrentVideo]);
+    setCurrentIndex(prevIndex => {
+      const newIndex = prevIndex === validMedia.length - 1 ? 0 : prevIndex + 1;
+      if (fullscreen) {
+        preloadAdjacentImages(newIndex);
+      }
+      return newIndex;
+    });
+  }, [validMedia.length, pauseCurrentVideo, fullscreen, preloadAdjacentImages]);
 
   const togglePlay = useCallback(() => {
     const video = videoRefs.current[currentIndex];
@@ -78,19 +122,31 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     }
   }, [currentIndex, isPlaying, videoRefs]);
 
-  const toggleFullscreen = () => {
+  const enterFullscreen = useCallback(() => {
     if (!galleryRef.current) return;
     
-    if (!fullscreen) {
-      if (galleryRef.current.requestFullscreen) {
-        galleryRef.current.requestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+    if (galleryRef.current.requestFullscreen) {
+      galleryRef.current.requestFullscreen();
     }
-  };
+    setFullscreen(true);
+    
+    preloadAdjacentImages(currentIndex);
+  }, [currentIndex, preloadAdjacentImages]);
+
+  const exitFullscreen = useCallback(() => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    setFullscreen(false);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (fullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+  }, [fullscreen, enterFullscreen, exitFullscreen]);
 
   const handleMediaError = (type: 'image' | 'video', index: number) => {
     console.error(`Error loading ${type} at index ${index}`);
@@ -101,7 +157,6 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     setImageLoading(prev => ({...prev, [index]: false}));
   };
 
-  // Initialize loading state for all images
   useEffect(() => {
     const loadingState: Record<number, boolean> = {};
     validMedia.forEach((item, index) => {
@@ -110,11 +165,23 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
       }
     });
     setImageLoading(loadingState);
-  }, [validMedia]);
+    
+    preloadImages();
+  }, [validMedia, preloadImages]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
       setFullscreen(document.fullscreenElement !== null);
+      
+      if (!document.fullscreenElement) {
+        if (validMedia[currentIndex]?.type === 'video') {
+          const video = videoRefs.current[currentIndex];
+          if (video && !video.paused) {
+            video.pause();
+            setIsPlaying(false);
+          }
+        }
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -122,9 +189,8 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, []);
+  }, [currentIndex, validMedia]);
 
-  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
@@ -137,7 +203,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           togglePlay();
         }
       } else if (e.key === 'Escape' && fullscreen) {
-        document.exitFullscreen();
+        exitFullscreen();
       }
     };
 
@@ -146,16 +212,14 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentIndex, validMedia, isPlaying, fullscreen, handleNext, handlePrevious, togglePlay]);
+  }, [currentIndex, validMedia, isPlaying, fullscreen, handleNext, handlePrevious, togglePlay, exitFullscreen]);
 
-  // Handle case when media array changes
   useEffect(() => {
     setCurrentIndex(0);
     setIsPlaying(false);
     setMediaError(null);
   }, [media]);
 
-  // Make sure currentIndex is valid
   useEffect(() => {
     if (validMedia.length > 0 && currentIndex >= validMedia.length) {
       setCurrentIndex(0);
@@ -180,14 +244,13 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
 
   const currentMedia = validMedia[currentIndex];
 
-  // For fullscreen view
   if (fullscreen) {
     return (
       <div ref={galleryRef} className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4">
         <div className="relative w-full h-full flex items-center justify-center">
           {currentMedia.type === 'image' ? (
             <div className="relative w-full h-full flex items-center justify-center">
-              {imageLoading[currentIndex] && (
+              {imageLoading[currentIndex] && !preloadedImages[currentIndex] && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-white" />
                 </div>
@@ -196,10 +259,13 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
                 src={currentMedia.url}
                 alt={`${title} - Image ${currentIndex + 1}`}
                 className="max-h-full max-w-full object-contain"
-                loading="lazy"
+                loading="eager"
                 onLoad={() => handleImageLoad(currentIndex)}
                 onError={() => handleMediaError('image', currentIndex)}
-                style={{ display: imageLoading[currentIndex] ? 'none' : 'block' }}
+                style={{ 
+                  display: (imageLoading[currentIndex] && !preloadedImages[currentIndex]) ? 'none' : 'block',
+                  objectFit: 'contain' 
+                }}
               />
             </div>
           ) : (
@@ -208,15 +274,16 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
               src={currentMedia.url}
               className="max-h-full max-w-full object-contain"
               controls
+              preload="auto"
               loop
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={() => setIsPlaying(false)}
               onError={() => handleMediaError('video', currentIndex)}
+              playsInline
             />
           )}
           
-          {/* Navigation controls */}
           <Button 
             variant="outline" 
             size="icon" 
@@ -234,17 +301,15 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
             <ChevronRight size={24} />
           </Button>
           
-          {/* Exit fullscreen button */}
           <Button 
             variant="outline" 
             size="icon" 
-            onClick={() => document.exitFullscreen()}
+            onClick={exitFullscreen}
             className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm hover:bg-black/50 text-white z-10"
           >
             <X size={20} />
           </Button>
           
-          {/* Progress indicator */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
             {currentIndex + 1} / {validMedia.length}
           </div>
@@ -259,7 +324,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
         <div className="aspect-[16/9] relative">
           {currentMedia.type === 'image' ? (
             <div className="w-full h-full relative">
-              {imageLoading[currentIndex] && (
+              {imageLoading[currentIndex] && !preloadedImages[currentIndex] && (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
@@ -271,7 +336,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
                 loading="lazy"
                 onLoad={() => handleImageLoad(currentIndex)}
                 onError={() => handleMediaError('image', currentIndex)}
-                style={{ display: imageLoading[currentIndex] ? 'none' : 'block' }}
+                style={{ display: (imageLoading[currentIndex] && !preloadedImages[currentIndex]) ? 'none' : 'block' }}
               />
             </div>
           ) : (
@@ -280,15 +345,16 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
               src={currentMedia.url}
               className="w-full h-full object-contain"
               controls={false}
+              preload="metadata"
               loop
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={() => setIsPlaying(false)}
               onError={() => handleMediaError('video', currentIndex)}
+              playsInline
             />
           )}
 
-          {/* Error message */}
           {mediaError && (
             <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-center py-2 z-10">
               {mediaError}
@@ -301,7 +367,6 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
             </div>
           )}
 
-          {/* Video controls */}
           {currentMedia.type === 'video' && (
             <Button 
               variant="outline" 
@@ -313,7 +378,6 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
             </Button>
           )}
 
-          {/* Navigation controls */}
           {validMedia.length > 1 && (
             <>
               <Button 
@@ -335,7 +399,6 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
             </>
           )}
 
-          {/* Action buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
             <Button 
               variant="outline" 
@@ -352,21 +415,19 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
             <Button 
               variant="outline" 
               size="icon" 
-              onClick={toggleFullscreen}
+              onClick={enterFullscreen}
               className="bg-white/80 backdrop-blur-sm hover:bg-white"
             >
               <Maximize size={20} />
             </Button>
           </div>
 
-          {/* Media info */}
           <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
             {currentMedia.type === 'image' ? 'Image' : 'Video'} {currentIndex + 1} of {validMedia.length}
           </div>
         </div>
       </div>
 
-      {/* Thumbnails carousel */}
       {validMedia.length > 1 && (
         <Carousel className="w-full">
           <CarouselContent className="py-1">
