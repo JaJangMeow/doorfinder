@@ -8,7 +8,7 @@ interface ContactInformationProps {
   contactEmail: string;
   contactPhone: string;
   onContactClick: () => void;
-  compact?: boolean; // New prop for compact display
+  compact?: boolean;
 }
 
 const ContactInformation: React.FC<ContactInformationProps> = ({

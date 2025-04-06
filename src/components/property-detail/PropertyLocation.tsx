@@ -1,13 +1,11 @@
 
 import React, { useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Map, Compass, Navigation } from 'lucide-react';
 import { useGoogleMapsScript } from '@/hooks/useGoogleMapsScript';
-import useGoogleMap from '@/hooks/useGoogleMap'; // Fixed import statement
-
-// Import smaller components
+import useGoogleMap from '@/hooks/useGoogleMap';
 import MapHeader from './MapHeader';
 import MapTabContent from './MapTabContent';
 import SatelliteTabContent from './SatelliteTabContent';
@@ -21,8 +19,7 @@ interface PropertyLocationProps {
   address: string;
 }
 
-// Export as named export instead of default export
-export const PropertyLocation: React.FC<PropertyLocationProps> = ({
+const PropertyLocation: React.FC<PropertyLocationProps> = ({
   latitude,
   longitude,
   address
@@ -43,7 +40,7 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
   const { 
     mapRef, 
     isReady, 
-    error: mapError, // Renamed to avoid conflict with boolean prop
+    error: mapError, 
     retryMapInitialization,
     addNearbyPlaces
   } = useGoogleMap({
@@ -63,7 +60,6 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
   const handleOpenGoogleStreetView = () => {
     if (!hasValidCoordinates) return;
     
-    // Google Street View URL format
     const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
     window.open(streetViewUrl, '_blank');
   };
@@ -105,7 +101,7 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
               <MapTabContent 
                 mapRef={mapRef}
                 isReady={isReady}
-                error={!!mapError} // Convert to boolean
+                error={!!mapError}
                 retryMapInitialization={retryMapInitialization}
                 showNearbyPlaces={showNearbyPlaces}
                 onShowNearbyPlaces={handleShowNearbyPlaces}
@@ -140,3 +136,5 @@ export const PropertyLocation: React.FC<PropertyLocationProps> = ({
     </div>
   );
 };
+
+export { PropertyLocation };
