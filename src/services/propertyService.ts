@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { PropertyData } from "@/components/PropertyCard";
-import { PropertyDetailData } from "@/components/PropertyDetail";
+import { PropertyDetailData } from "@/components/property-detail/types";
 
 // All properties can include distance property for sorting
 export interface PropertyFilter {
