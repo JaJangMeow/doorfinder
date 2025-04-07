@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Play } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, ImageOff } from 'lucide-react';
 import { 
   Carousel,
   CarouselContent,
@@ -23,6 +23,12 @@ const ThumbnailGallery: React.FC<ThumbnailGalleryProps> = ({
   currentIndex,
   onThumbnailClick
 }) => {
+  const [thumbnailErrors, setThumbnailErrors] = useState<Record<number, boolean>>({});
+  
+  const handleThumbnailError = (index: number) => {
+    setThumbnailErrors(prev => ({...prev, [index]: true}));
+  };
+
   return (
     <Carousel className="w-full">
       <CarouselContent className="py-1">
@@ -35,36 +41,35 @@ const ThumbnailGallery: React.FC<ThumbnailGalleryProps> = ({
               }`}
             >
               {item.type === 'image' ? (
-                <img
-                  src={item.url}
-                  alt={`${title} - Thumbnail ${index + 1}`}
-                  className="object-cover w-full h-full"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80';
-                  }}
-                />
+                thumbnailErrors[index] ? (
+                  <div className="h-full w-full flex items-center justify-center bg-muted">
+                    <ImageOff size={16} className="text-muted-foreground" />
+                  </div>
+                ) : (
+                  <img
+                    src={item.url}
+                    alt={`${title} - Thumbnail ${index + 1}`}
+                    className="object-cover w-full h-full"
+                    loading="lazy"
+                    onError={() => handleThumbnailError(index)}
+                  />
+                )
               ) : (
                 <div className="relative w-full h-full">
                   <video
                     src={item.url}
                     className="object-cover w-full h-full"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        parent.classList.add('bg-gray-200');
-                        const errorIcon = document.createElement('div');
-                        errorIcon.className = 'absolute inset-0 flex items-center justify-center bg-gray-100';
-                        errorIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
-                        parent.appendChild(errorIcon);
-                      }
-                    }}
+                    onError={() => handleThumbnailError(index)}
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                     <Play size={16} className="text-white" />
                   </div>
                 </div>
+              )}
+              
+              {/* Highlight current item with an indicator */}
+              {index === currentIndex && (
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-primary"></div>
               )}
             </div>
           </CarouselItem>

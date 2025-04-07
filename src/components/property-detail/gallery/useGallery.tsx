@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MediaItem } from '../types';
 
@@ -19,40 +18,85 @@ export const useGallery = ({ media }: UseGalleryProps) => {
   const validMedia = media.filter(item => item.url && (item.type === 'image' || item.type === 'video'));
 
   const preloadImages = useCallback(() => {
+    if (validMedia.length === 0) return;
+    
     const preloadState: Record<number, boolean> = {};
+    const loadingState: Record<number, boolean> = {};
     
     validMedia.forEach((item, index) => {
       if (item.type === 'image') {
         preloadState[index] = false;
-        const img = new Image();
-        img.onload = () => {
-          setPreloadedImages(prev => ({...prev, [index]: true}));
-        };
-        img.onerror = () => {
-          console.error(`Failed to preload image at index ${index}`);
-        };
-        img.src = item.url;
+        loadingState[index] = true;
       }
     });
     
     setPreloadedImages(preloadState);
-  }, [validMedia]);
+    setImageLoading(loadingState);
+    
+    if (validMedia[currentIndex]?.type === 'image') {
+      const img = new Image();
+      img.onload = () => {
+        setPreloadedImages(prev => ({...prev, [currentIndex]: true}));
+        setImageLoading(prev => ({...prev, [currentIndex]: false}));
+        
+        preloadAdjacentImages(currentIndex);
+      };
+      img.onerror = () => {
+        console.error(`Failed to preload primary image at index ${currentIndex}`);
+        setImageLoading(prev => ({...prev, [currentIndex]: false}));
+        preloadAdjacentImages(currentIndex);
+      };
+      img.src = validMedia[currentIndex].url;
+    } else {
+      preloadAdjacentImages(currentIndex);
+    }
+  }, [validMedia, currentIndex]);
 
   const preloadAdjacentImages = useCallback((index: number) => {
     if (validMedia.length <= 1) return;
     
-    const prevIndex = index === 0 ? validMedia.length - 1 : index - 1;
-    const nextIndex = index === validMedia.length - 1 ? 0 : index + 1;
+    const queue: number[] = [];
     
-    [prevIndex, nextIndex].forEach(idx => {
-      if (validMedia[idx]?.type === 'image' && !preloadedImages[idx]) {
+    const nextIndex = index === validMedia.length - 1 ? 0 : index + 1;
+    const prevIndex = index === 0 ? validMedia.length - 1 : index - 1;
+    
+    if (validMedia[nextIndex]?.type === 'image' && !preloadedImages[nextIndex]) {
+      queue.push(nextIndex);
+    }
+    
+    if (validMedia[prevIndex]?.type === 'image' && !preloadedImages[prevIndex]) {
+      queue.push(prevIndex);
+    }
+    
+    validMedia.forEach((item, idx) => {
+      if (idx !== index && idx !== nextIndex && idx !== prevIndex && 
+          item.type === 'image' && !preloadedImages[idx]) {
+        queue.push(idx);
+      }
+    });
+    
+    let i = 0;
+    const processQueue = () => {
+      if (i < queue.length) {
+        const idx = queue[i];
         const img = new Image();
         img.onload = () => {
           setPreloadedImages(prev => ({...prev, [idx]: true}));
+          setImageLoading(prev => ({...prev, [idx]: false}));
+          i++;
+          setTimeout(processQueue, 100);
+        };
+        img.onerror = () => {
+          console.error(`Failed to preload image at index ${idx}`);
+          setImageLoading(prev => ({...prev, [idx]: false}));
+          i++;
+          setTimeout(processQueue, 100);
         };
         img.src = validMedia[idx].url;
       }
-    });
+    };
+    
+    processQueue();
   }, [validMedia, preloadedImages]);
 
   const pauseCurrentVideo = useCallback(() => {
@@ -127,11 +171,25 @@ export const useGallery = ({ media }: UseGalleryProps) => {
 
   const handleMediaError = (type: 'image' | 'video', index: number) => {
     console.error(`Error loading ${type} at index ${index}`);
-    setMediaError(`Error loading ${type}. Please try again.`);
+    
+    if (type === 'image') {
+      setImageLoading(prev => ({...prev, [index]: false}));
+      
+      if (index === currentIndex) {
+        setMediaError(`Error loading ${type}. Please try again.`);
+      }
+    } else {
+      setMediaError(`Error loading ${type}. Please try again.`);
+    }
   };
 
   const handleImageLoad = (index: number) => {
     setImageLoading(prev => ({...prev, [index]: false}));
+    setPreloadedImages(prev => ({...prev, [index]: true}));
+    
+    if (index === currentIndex && mediaError) {
+      setMediaError(null);
+    }
   };
 
   const handleThumbnailClick = (index: number) => {
@@ -146,9 +204,11 @@ export const useGallery = ({ media }: UseGalleryProps) => {
         loadingState[index] = true;
       }
     });
-    setImageLoading(loadingState);
     
+    setImageLoading(loadingState);
     preloadImages();
+    
+    setMediaError(null);
   }, [validMedia, preloadImages]);
 
   useEffect(() => {

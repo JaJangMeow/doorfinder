@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'doorfinder-cache-v2';
+const CACHE_NAME = 'doorfinder-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,6 +11,9 @@ const urlsToCache = [
   '/favicon.svg',
   '/lovable-uploads/83895367-873f-49ab-ab0f-09cf6a9ea424.png'
 ];
+
+// Fallback placeholder image
+const FALLBACK_IMAGE = '/placeholder.svg';
 
 // Install service worker
 self.addEventListener('install', (event) => {
@@ -74,14 +77,27 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Special strategy for images - stale-while-revalidate
+// Enhanced strategy for images - stale-while-revalidate with priority
 const imageStrategy = async (request) => {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
   
+  // Check if this is a high-priority image
+  const isHighPriority = request.headers.get('X-Priority') === 'high' || 
+                         request.url.includes('priority=high');
+  
+  // Function to fetch and cache the image
   const fetchAndCache = async () => {
     try {
-      const networkResponse = await fetch(request);
+      // Add a timeout for network requests to avoid hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Network timeout')), 5000);
+      });
+      
+      const networkResponse = await Promise.race([
+        fetch(request, { cache: 'no-cache' }),
+        timeoutPromise
+      ]);
       
       // Cache the new response (only if successful)
       if (networkResponse.ok) {
@@ -91,27 +107,51 @@ const imageStrategy = async (request) => {
       return networkResponse;
     } catch (error) {
       console.error('Error fetching image:', error);
-      // If the network request fails and we don't have a cached response, 
-      // we need to throw to trigger the catch block
-      if (!cachedResponse) throw error;
+      
+      // If network request fails and we don't have a cached response,
+      // try to return a placeholder image
+      if (!cachedResponse) {
+        const placeholder = await cache.match(FALLBACK_IMAGE);
+        if (placeholder) return placeholder;
+        
+        // If no placeholder in cache, try to fetch it directly
+        try {
+          return await fetch(FALLBACK_IMAGE);
+        } catch (error) {
+          throw error; // Ultimately fail if we can't get even a placeholder
+        }
+      }
       return cachedResponse;
     }
   };
   
-  // Return cached response immediately if available (stale)
-  if (cachedResponse) {
-    // Update the cache in the background
-    fetchAndCache().catch(console.error);
-    return cachedResponse;
+  // For high priority images or if nothing in cache, wait for network
+  if (isHighPriority || !cachedResponse) {
+    try {
+      return await fetchAndCache();
+    } catch (error) {
+      if (cachedResponse) return cachedResponse;
+      
+      // Try to return a placeholder as last resort
+      try {
+        const placeholder = await cache.match(FALLBACK_IMAGE);
+        if (placeholder) return placeholder;
+      } catch (e) {
+        console.error('Failed to fetch placeholder:', e);
+      }
+      
+      throw error; // Fail if all else fails
+    }
   }
   
-  // If nothing in cache, wait for the network response
-  return fetchAndCache();
+  // For normal priority with cached version: return cache immediately, update in background
+  fetchAndCache().catch(console.error);
+  return cachedResponse;
 };
 
 // Update service worker
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = ['doorfinder-cache-v2'];
+  const cacheWhitelist = ['doorfinder-cache-v3']; // Updated cache version
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
