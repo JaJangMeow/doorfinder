@@ -2,8 +2,8 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { PropertyDetail } from "@/components/property-detail"; // Import as named export
-import { getPropertyById } from "@/services/propertyService";
+import { PropertyDetail } from "@/components/property-detail";
+import { getPropertyById } from "@/services/property/propertyDetail";
 import { useToast } from "@/hooks/use-toast";
 import TabBar from "@/components/TabBar";
 import Navbar from "@/components/Navbar";

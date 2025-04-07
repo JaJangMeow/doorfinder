@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import PropertyCard from "@/components/PropertyCard";
 import Button from "@/components/Button";
 import TabBar from "@/components/TabBar";
 import { Building, ChevronDown, Search, Map, Grid } from "lucide-react";
-import { getProperties } from "@/services/propertyService";
+import { getProperties } from "@/services/property/propertySearch";
 import { useToast } from "@/components/ui/use-toast";
 import { PropertyMapView } from "@/components/map";
 import DownloadAppButton from "@/components/DownloadAppButton";
