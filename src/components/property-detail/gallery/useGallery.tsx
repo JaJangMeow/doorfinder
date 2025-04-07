@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MediaItem } from '../types';
 
@@ -15,7 +16,14 @@ export const useGallery = ({ media }: UseGalleryProps) => {
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  const validMedia = media.filter(item => item.url && (item.type === 'image' || item.type === 'video'));
+  // Filter only valid media items
+  const validMedia = media.filter(item => 
+    item && 
+    item.url && 
+    typeof item.url === 'string' && 
+    item.url.trim() !== '' &&
+    (item.type === 'image' || item.type === 'video')
+  );
 
   const preloadImages = useCallback(() => {
     if (validMedia.length === 0) return;
@@ -33,22 +41,18 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     setPreloadedImages(preloadState);
     setImageLoading(loadingState);
     
+    // Prioritize loading current image
     if (validMedia[currentIndex]?.type === 'image') {
       const img = new Image();
       img.onload = () => {
         setPreloadedImages(prev => ({...prev, [currentIndex]: true}));
         setImageLoading(prev => ({...prev, [currentIndex]: false}));
-        
-        preloadAdjacentImages(currentIndex);
       };
       img.onerror = () => {
         console.error(`Failed to preload primary image at index ${currentIndex}`);
         setImageLoading(prev => ({...prev, [currentIndex]: false}));
-        preloadAdjacentImages(currentIndex);
       };
       img.src = validMedia[currentIndex].url;
-    } else {
-      preloadAdjacentImages(currentIndex);
     }
   }, [validMedia, currentIndex]);
 
@@ -68,10 +72,10 @@ export const useGallery = ({ media }: UseGalleryProps) => {
       queue.push(prevIndex);
     }
     
-    validMedia.forEach((item, idx) => {
+    validMedia.forEach((idx) => {
       if (idx !== index && idx !== nextIndex && idx !== prevIndex && 
-          item.type === 'image' && !preloadedImages[idx]) {
-        queue.push(idx);
+          validMedia[Number(idx)]?.type === 'image' && !preloadedImages[Number(idx)]) {
+        queue.push(Number(idx));
       }
     });
     
@@ -113,23 +117,17 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     pauseCurrentVideo();
     setCurrentIndex(prevIndex => {
       const newIndex = prevIndex === 0 ? validMedia.length - 1 : prevIndex - 1;
-      if (fullscreen) {
-        preloadAdjacentImages(newIndex);
-      }
       return newIndex;
     });
-  }, [validMedia.length, pauseCurrentVideo, fullscreen, preloadAdjacentImages]);
+  }, [validMedia.length, pauseCurrentVideo]);
 
   const handleNext = useCallback(() => {
     pauseCurrentVideo();
     setCurrentIndex(prevIndex => {
       const newIndex = prevIndex === validMedia.length - 1 ? 0 : prevIndex + 1;
-      if (fullscreen) {
-        preloadAdjacentImages(newIndex);
-      }
       return newIndex;
     });
-  }, [validMedia.length, pauseCurrentVideo, fullscreen, preloadAdjacentImages]);
+  }, [validMedia.length, pauseCurrentVideo]);
 
   const togglePlay = useCallback(() => {
     const video = videoRefs.current[currentIndex];
@@ -146,19 +144,25 @@ export const useGallery = ({ media }: UseGalleryProps) => {
   const enterFullscreen = useCallback(() => {
     if (!galleryRef.current) return;
     
-    if (galleryRef.current.requestFullscreen) {
-      galleryRef.current.requestFullscreen();
-    }
     setFullscreen(true);
     
-    preloadAdjacentImages(currentIndex);
-  }, [currentIndex, preloadAdjacentImages]);
+    // In fullscreen mode, attempt to use browser's fullscreen API
+    if (galleryRef.current.requestFullscreen) {
+      galleryRef.current.requestFullscreen().catch(err => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    }
+  }, []);
 
   const exitFullscreen = useCallback(() => {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    }
     setFullscreen(false);
+    
+    // Exit browser's fullscreen if active
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(err => {
+        console.error('Error attempting to exit fullscreen:', err);
+      });
+    }
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -169,7 +173,7 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     }
   }, [fullscreen, enterFullscreen, exitFullscreen]);
 
-  const handleMediaError = (type: 'image' | 'video', index: number) => {
+  const handleMediaError = useCallback((type: 'image' | 'video', index: number) => {
     console.error(`Error loading ${type} at index ${index}`);
     
     if (type === 'image') {
@@ -181,22 +185,23 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     } else {
       setMediaError(`Error loading ${type}. Please try again.`);
     }
-  };
+  }, [currentIndex]);
 
-  const handleImageLoad = (index: number) => {
+  const handleImageLoad = useCallback((index: number) => {
     setImageLoading(prev => ({...prev, [index]: false}));
     setPreloadedImages(prev => ({...prev, [index]: true}));
     
     if (index === currentIndex && mediaError) {
       setMediaError(null);
     }
-  };
+  }, [currentIndex, mediaError]);
 
-  const handleThumbnailClick = (index: number) => {
+  const handleThumbnailClick = useCallback((index: number) => {
     pauseCurrentVideo();
     setCurrentIndex(index);
-  };
+  }, [pauseCurrentVideo]);
 
+  // Initialize loading states and preload images only on initial render or when media changes
   useEffect(() => {
     const loadingState: Record<number, boolean> = {};
     validMedia.forEach((item, index) => {
@@ -209,19 +214,25 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     preloadImages();
     
     setMediaError(null);
-  }, [validMedia, preloadImages]);
+    setCurrentIndex(0);
+    setIsPlaying(false);
+  }, [media]); // Depend on media only, not validMedia
 
+  // Handle fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setFullscreen(document.fullscreenElement !== null);
+      const isDocFullscreen = document.fullscreenElement !== null;
       
-      if (!document.fullscreenElement) {
-        if (validMedia[currentIndex]?.type === 'video') {
-          const video = videoRefs.current[currentIndex];
-          if (video && !video.paused) {
-            video.pause();
-            setIsPlaying(false);
-          }
+      // Only update state if it doesn't match the current fullscreen state
+      if (fullscreen !== isDocFullscreen) {
+        setFullscreen(isDocFullscreen);
+      }
+      
+      if (!isDocFullscreen && validMedia[currentIndex]?.type === 'video') {
+        const video = videoRefs.current[currentIndex];
+        if (video && !video.paused) {
+          video.pause();
+          setIsPlaying(false);
         }
       }
     };
@@ -231,8 +242,9 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [currentIndex, validMedia]);
+  }, [currentIndex, fullscreen, validMedia]);
 
+  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
@@ -254,19 +266,21 @@ export const useGallery = ({ media }: UseGalleryProps) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentIndex, validMedia, isPlaying, fullscreen, handleNext, handlePrevious, togglePlay, exitFullscreen]);
+  }, [currentIndex, validMedia, handleNext, handlePrevious, togglePlay, exitFullscreen, fullscreen]);
 
-  useEffect(() => {
-    setCurrentIndex(0);
-    setIsPlaying(false);
-    setMediaError(null);
-  }, [media]);
-
+  // Ensure current index is valid
   useEffect(() => {
     if (validMedia.length > 0 && currentIndex >= validMedia.length) {
       setCurrentIndex(0);
     }
-  }, [currentIndex, validMedia]);
+  }, [validMedia, currentIndex]);
+
+  // Preload adjacent images when in fullscreen or when current index changes
+  useEffect(() => {
+    if (fullscreen || currentIndex !== undefined) {
+      preloadAdjacentImages(currentIndex);
+    }
+  }, [fullscreen, currentIndex, preloadAdjacentImages]);
 
   return {
     validMedia,

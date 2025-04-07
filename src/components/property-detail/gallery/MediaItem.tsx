@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, Play, AlertTriangle } from 'lucide-react';
 import { MediaItem as MediaItemType } from '../types';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,12 @@ const MediaItem: React.FC<MediaItemProps> = ({
   
   // Fallback image URL
   const fallbackImage = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80';
+
+  useEffect(() => {
+    // Reset errors when item changes
+    setImgError(false);
+    setRetryCount(0);
+  }, [item.url]);
   
   const handleImageError = () => {
     if (retryCount < maxRetries) {
@@ -94,10 +100,10 @@ const MediaItem: React.FC<MediaItemProps> = ({
         {imgError ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted/30">
             <AlertTriangle className="h-12 w-12 text-amber-500 mb-2" />
-            <p className="text-sm text-muted-foreground mb-3">Failed to load image</p>
+            <p className={`text-sm ${isFullscreen ? 'text-white' : 'text-muted-foreground'} mb-3`}>Failed to load image</p>
             <Button 
               size="sm" 
-              variant="outline" 
+              variant={isFullscreen ? "secondary" : "outline"} 
               onClick={handleRetry}
               className="flex items-center gap-1"
             >
@@ -108,16 +114,13 @@ const MediaItem: React.FC<MediaItemProps> = ({
           <img
             src={item.url}
             alt={`${title} - Image ${index + 1}`}
-            className={`${isFullscreen ? 'max-h-full max-w-full' : 'w-full h-full'} object-contain`}
-            loading={index === currentIndex || isFullscreen ? "eager" : "lazy"}
+            className={`${isFullscreen ? 'max-h-screen max-w-screen-xl object-contain' : 'w-full h-full object-cover'}`}
+            loading={index === currentIndex ? "eager" : "lazy"}
             onLoad={() => onImageLoad(index)}
             onError={handleImageError}
             style={{ 
-              display: (imageLoading[index] && !preloadedImages[index] && !imgError) ? 'none' : 'block',
-              objectFit: 'contain' 
+              display: (imageLoading[index] && !preloadedImages[index] && !imgError) ? 'none' : 'block'
             }}
-            // Add cache-control for Service Worker
-            data-cache-priority={index === currentIndex ? 'high' : 'normal'}
           />
         )}
       </div>
@@ -153,10 +156,10 @@ const MediaItem: React.FC<MediaItemProps> = ({
         {videoError ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted/30">
             <AlertTriangle className="h-12 w-12 text-amber-500 mb-2" />
-            <p className="text-sm text-muted-foreground mb-3">Failed to load video</p>
+            <p className={`text-sm ${isFullscreen ? 'text-white' : 'text-muted-foreground'} mb-3`}>Failed to load video</p>
             <Button 
               size="sm" 
-              variant="outline" 
+              variant={isFullscreen ? "secondary" : "outline"} 
               onClick={handleRetryVideo}
               className="flex items-center gap-1"
             >
@@ -167,9 +170,9 @@ const MediaItem: React.FC<MediaItemProps> = ({
           <video
             ref={el => videoRefs.current[index] = el}
             src={item.url}
-            className={`${isFullscreen ? 'max-h-full max-w-full' : 'w-full h-full'} object-contain`}
+            className={`${isFullscreen ? 'max-h-screen max-w-screen-xl object-contain' : 'w-full h-full object-cover'}`}
             controls={isFullscreen}
-            preload={index === currentIndex || isFullscreen ? "auto" : "metadata"}
+            preload={index === currentIndex ? "auto" : "metadata"}
             loop
             onPlay={onPlay}
             onPause={onPause}

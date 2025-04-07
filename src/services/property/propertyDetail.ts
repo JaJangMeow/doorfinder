@@ -11,7 +11,7 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       .from('properties')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     if (!data) return null;
@@ -24,7 +24,13 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
     
     // First try to use the media JSON field
     if (data.media && Array.isArray(data.media)) {
-      mediaItems = data.media;
+      mediaItems = data.media.map(item => {
+        // Ensure all items have a type and valid URL
+        if (!item.type || !['image', 'video'].includes(item.type)) {
+          item.type = 'image';
+        }
+        return item;
+      });
     } 
     // Then try to use the images array
     else if (data.images && Array.isArray(data.images) && data.images.length > 0) {
@@ -57,7 +63,7 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       availableFrom: data.available_from,
       description: data.description || 'No description available.',
       images: data.images || [data.image_url || fallbackImage],
-      media: mediaItems,
+      media: mediaItems.length > 0 ? mediaItems : [{ url: fallbackImage, type: 'image' }],
       contactName: data.contact_name || 'Property Manager',
       contactEmail: data.contact_email || 'contact@example.com',
       contactPhone: data.contact_phone || '(555) 123-4567',
