@@ -27,6 +27,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   isLoading,
   onSaveToggle
 }) => {
+  // Use the full `useGallery` hook (make sure all returned properties are used!)
   const {
     validMedia,
     currentIndex,
@@ -84,6 +85,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   return (
     <div ref={galleryRef} className="space-y-4">
       <div className="relative rounded-xl overflow-hidden bg-muted">
+        {/* Height increased: */}
         <div className="aspect-[16/9] relative min-h-[300px] md:min-h-[400px]">
           <MediaItem
             item={currentMedia}
