@@ -32,7 +32,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     validMedia,
     currentIndex,
     isPlaying,
-    fullscreen,
+    isFullscreen,
     mediaError,
     imageLoading,
     preloadedImages,
@@ -48,7 +48,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
     handleThumbnailClick,
     setIsPlaying,
     setMediaError
-  } = useGallery({ media });
+  } = useGallery(media);
 
   if (isLoading) {
     return <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg" />;
@@ -60,7 +60,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
 
   const currentMedia = validMedia[currentIndex];
 
-  if (fullscreen) {
+  if (isFullscreen) {
     return (
       <FullscreenGallery
         media={validMedia}
