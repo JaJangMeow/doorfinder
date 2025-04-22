@@ -50,7 +50,35 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       (item.type === 'image' || item.type === 'video')
     );
     
-    console.log('Processed media items:', mediaItems);
+    // Process coordinates
+    let latitude = null;
+    let longitude = null;
+    
+    // Parse latitude if it exists and is valid
+    if (data.latitude !== null && data.latitude !== undefined) {
+      latitude = typeof data.latitude === 'string' 
+        ? parseFloat(data.latitude) 
+        : Number(data.latitude);
+        
+      // Check if latitude is a valid non-zero number
+      if (isNaN(latitude) || latitude === 0) {
+        latitude = null;
+      }
+    }
+    
+    // Parse longitude if it exists and is valid
+    if (data.longitude !== null && data.longitude !== undefined) {
+      longitude = typeof data.longitude === 'string' 
+        ? parseFloat(data.longitude) 
+        : Number(data.longitude);
+        
+      // Check if longitude is a valid non-zero number
+      if (isNaN(longitude) || longitude === 0) {
+        longitude = null;
+      }
+    }
+    
+    console.log('Property coordinates:', { latitude, longitude });
     
     return {
       id: data.id,
@@ -67,8 +95,8 @@ export const getPropertyById = async (id: string): Promise<PropertyDetailData | 
       contactName: data.contact_name || 'Property Manager',
       contactEmail: data.contact_email || 'contact@example.com',
       contactPhone: data.contact_phone || '(555) 123-4567',
-      latitude: data.latitude,
-      longitude: data.longitude,
+      latitude: latitude,
+      longitude: longitude,
       hasHall: data.has_hall,
       hasSeparateKitchen: data.has_separate_kitchen,
       nearbyCollege: data.nearby_college || 'Not specified',

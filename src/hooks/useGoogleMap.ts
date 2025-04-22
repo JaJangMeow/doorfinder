@@ -1,5 +1,12 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+// Single property location props for PropertyLocation component
+interface PropertyLocationProps {
+  latitude: number;
+  longitude: number;
+  googleMapsLoaded: boolean;
+}
 
 interface Property {
   id: string;
@@ -21,19 +28,15 @@ interface UseGoogleMapProps {
   userLocation: { lat: number; lng: number } | null;
 }
 
-// Single property location props for PropertyLocation component
-interface PropertyLocationProps {
-  latitude: number;
-  longitude: number;
-  googleMapsLoaded: boolean;
-}
+type GoogleMapProps = UseGoogleMapProps | PropertyLocationProps;
 
-const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
+const useGoogleMap = (props: GoogleMapProps) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const markers = useRef<google.maps.Marker[]>([]);
+  
   // For handling nearby places
   const [nearbyPlaces, setNearbyPlaces] = useState<Array<{
     name: string;
@@ -48,7 +51,7 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
   // Extract the necessary location values based on the props type
   const location = isSingleProperty 
     ? { lat: props.latitude, lng: props.longitude }
-    : props.userLocation || { lat: 0, lng: 0 };
+    : (props.userLocation || { lat: 0, lng: 0 });
   
   const properties = isSingleProperty 
     ? [] // Empty array for single property view
@@ -58,60 +61,79 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
     ? props.googleMapsLoaded 
     : true; // Assume loaded for regular property listing
 
+  // Initialize map
   useEffect(() => {
-    const loadMap = async () => {
-      if (!mapRef.current) return;
+    // Clean up function to remove previous map and markers
+    const cleanUp = () => {
+      if (markers.current) {
+        markers.current.forEach(marker => marker.setMap(null));
+        markers.current = [];
+      }
       
-      try {
-        const google = window.google;
-        const mapOptions: google.maps.MapOptions = {
-          center: location,
-          zoom: location.lat !== 0 || location.lng !== 0 ? 15 : 2,
-          mapTypeId: 'roadmap',
-        };
-
-        const newMap = new google.maps.Map(mapRef.current, mapOptions);
-        setMap(newMap);
-        setIsReady(true);
-        setError(null);
-
-        // If we're dealing with a single property, add a marker for it
-        if (isSingleProperty && location.lat !== 0 && location.lng !== 0) {
-          new google.maps.Marker({
-            position: location,
-            map: newMap,
-            animation: google.maps.Animation.DROP,
-          });
-        }
-      } catch (err) {
-        console.error('Error initializing map:', err);
-        setError('Failed to initialize Google Maps');
-        setIsReady(false);
+      if (map) {
+        // No direct remove method for google maps
+        setMap(null);
       }
     };
 
-    if (window.google && googleMapsLoaded) {
-      loadMap();
-    } else if (googleMapsLoaded) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = loadMap;
-      script.onerror = () => {
-        setError('Failed to load Google Maps API');
-        setIsReady(false);
+    // Skip initialization if Google Maps is not loaded or mapRef is not ready
+    if (!googleMapsLoaded || !mapRef.current || !window.google || !window.google.maps) {
+      return cleanUp;
+    }
+    
+    try {
+      console.log("Initializing Google Map with location:", location);
+      
+      // Create map instance
+      const mapOptions: google.maps.MapOptions = {
+        center: location,
+        zoom: (location.lat !== 0 || location.lng !== 0) ? 15 : 2,
+        mapTypeControl: true,
+        streetViewControl: true,
+        zoomControl: true,
+        fullscreenControl: false,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
       };
-      document.head.appendChild(script);
+
+      const newMap = new google.maps.Map(mapRef.current, mapOptions);
+      setMap(newMap);
+      setIsReady(true);
+      setError(null);
+
+      // Add marker for single property view
+      if (isSingleProperty && location.lat !== 0 && location.lng !== 0) {
+        const marker = new google.maps.Marker({
+          position: location,
+          map: newMap,
+          animation: google.maps.Animation.DROP,
+        });
+        
+        markers.current.push(marker);
+      }
+      
+      return cleanUp;
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError('Failed to initialize Google Maps');
+      setIsReady(false);
+      return cleanUp;
     }
   }, [location, isSingleProperty, googleMapsLoaded]);
 
+  // Add markers for multiple properties
   useEffect(() => {
-    if (!map || properties.length === 0) return;
+    if (!map || properties.length === 0 || !window.google || !window.google.maps) return;
+    
+    // Clear existing markers
+    markers.current.forEach(marker => marker.setMap(null));
+    markers.current = [];
 
-    const google = window.google;
-
-    const createMarker = (property: Property) => {
+    const bounds = new google.maps.LatLngBounds();
+    
+    // Add markers for each property
+    properties.forEach(property => {
+      if (!property.latitude || !property.longitude) return;
+      
       const propertyLatLng = { 
         lat: property.latitude, 
         lng: property.longitude 
@@ -122,10 +144,12 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
         map: map,
         title: property.title,
       });
+      
+      markers.current.push(marker);
 
+      // Create info window content
       const contentString = `
         <div style="display: flex; flex-direction: column; align-items: flex-start; width: 250px;">
-          <img src="${property.imageUrl}" alt="${property.title}" style="width: 100%; height: auto; margin-bottom: 8px;">
           <h3 style="font-size: 1.2em; margin-bottom: 4px;">${property.title}</h3>
           <p style="font-size: 1em; margin-bottom: 4px;">${property.address}</p>
           <p style="font-size: 1.1em; font-weight: bold; margin-bottom: 8px;">₹${property.price}/month</p>
@@ -148,38 +172,48 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
         });
       });
       
-      return marker;
-    };
-
-    const bounds = new google.maps.LatLngBounds();
-    properties.forEach(property => {
-      if (property.latitude && property.longitude) {
-        const marker = createMarker(property);
-        bounds.extend({ 
-          lat: property.latitude, 
-          lng: property.longitude 
-        });
-      }
+      bounds.extend(propertyLatLng);
     });
 
+    // Fit map to bounds if there are properties
     if (properties.length > 0) {
       map.fitBounds(bounds);
     }
   }, [map, properties]);
 
-  // Function to add nearby places to the map
-  const addNearbyPlaces = () => {
-    if (!map || !isReady) return;
+  // Add nearby places to the map
+  const addNearbyPlaces = useCallback(() => {
+    if (!map || !isReady || !window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Cannot add nearby places: Map not ready or Places library not loaded");
+      return;
+    }
+    
+    console.log("Adding nearby places to map");
     
     try {
-      const google = window.google;
       const service = new google.maps.places.PlacesService(map);
-      
       const center = map.getCenter();
-      if (!center) return;
+      
+      if (!center) {
+        console.error("Cannot get map center");
+        return;
+      }
 
       const searchTypes = ['restaurant', 'school', 'transit_station'];
+      let processedPlaces = 0;
       
+      // Clear existing nearby place markers
+      markers.current = markers.current.filter(marker => {
+        if (marker.getTitle()?.startsWith('nearby-')) {
+          marker.setMap(null);
+          return false;
+        }
+        return true;
+      });
+      
+      setNearbyPlaces([]);
+      
+      // Search for nearby places by type
       searchTypes.forEach(type => {
         service.nearbySearch(
           {
@@ -188,7 +222,11 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
             type: type
           },
           (results, status) => {
+            processedPlaces++;
+            
             if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              console.log(`Found ${results.length} nearby ${type}s`);
+              
               const newPlaces = results.slice(0, 5).map(place => ({
                 name: place.name || 'Unnamed Place',
                 position: {
@@ -199,12 +237,11 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
                 type: type
               }));
               
-              setNearbyPlaces(prev => [...prev, ...newPlaces]);
-              
               // Add markers for these places
               newPlaces.forEach(place => {
                 let icon;
                 
+                // Different icons for different place types
                 switch (type) {
                   case 'restaurant':
                     icon = {
@@ -231,13 +268,40 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
                     };
                 }
                 
-                new google.maps.Marker({
+                // Create marker for this place
+                const placeMarker = new google.maps.Marker({
                   position: place.position,
                   map: map,
                   icon: icon,
-                  title: place.name,
+                  title: `nearby-${place.name}`, // Prefix to identify nearby place markers
+                });
+                
+                markers.current.push(placeMarker);
+                
+                // Add info window with place details
+                const infoContent = `
+                  <div style="padding: 8px;">
+                    <strong>${place.name}</strong><br/>
+                    <span>${type.replace('_', ' ')}</span>
+                  </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                  content: infoContent
+                });
+                
+                placeMarker.addListener('click', () => {
+                  infoWindow.open({
+                    anchor: placeMarker,
+                    map
+                  });
                 });
               });
+              
+              // Update state with new places
+              setNearbyPlaces(prev => [...prev, ...newPlaces]);
+            } else {
+              console.warn(`No ${type}s found or error: ${status}`);
             }
           }
         );
@@ -245,73 +309,60 @@ const useGoogleMap = (props: UseGoogleMapProps | PropertyLocationProps) => {
     } catch (err) {
       console.error('Error finding nearby places:', err);
     }
-  };
+  }, [map, isReady]);
 
-  // Function to retry map initialization
-  const retryMapInitialization = () => {
+  // Retry map initialization if it fails
+  const retryMapInitialization = useCallback(() => {
+    console.log("Retrying map initialization");
     setError(null);
     
-    if (window.google) {
-      // If Google Maps API is already loaded, try initializing the map again
-      setIsReady(false);
-      
-      setTimeout(() => {
-        if (!mapRef.current) return;
-        
-        try {
-          const google = window.google;
-          const mapOptions: google.maps.MapOptions = {
-            center: location,
-            zoom: location.lat !== 0 || location.lng !== 0 ? 15 : 2,
-            mapTypeId: 'roadmap',
-          };
-
-          const newMap = new google.maps.Map(mapRef.current, mapOptions);
-          setMap(newMap);
-          setIsReady(true);
-        } catch (err) {
-          console.error('Error retrying map initialization:', err);
-          setError('Failed to initialize Google Maps');
-        }
-      }, 100);
-    } else {
-      // If Google Maps API is not loaded, reload the script
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (!mapRef.current) return;
-        
-        try {
-          const google = window.google;
-          const mapOptions: google.maps.MapOptions = {
-            center: location,
-            zoom: location.lat !== 0 || location.lng !== 0 ? 15 : 2,
-            mapTypeId: 'roadmap',
-          };
-
-          const newMap = new google.maps.Map(mapRef.current, mapOptions);
-          setMap(newMap);
-          setIsReady(true);
-        } catch (err) {
-          console.error('Error initializing map after script reload:', err);
-          setError('Failed to initialize Google Maps');
-        }
-      };
-      script.onerror = () => {
-        setError('Failed to load Google Maps API');
-      };
-      document.head.appendChild(script);
+    if (!mapRef.current) {
+      console.error("Map container ref is not available");
+      return;
     }
-  };
+    
+    // If Google Maps API is loaded, initialize map
+    if (window.google && window.google.maps) {
+      try {
+        const mapOptions: google.maps.MapOptions = {
+          center: location,
+          zoom: (location.lat !== 0 || location.lng !== 0) ? 15 : 2,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+        };
+
+        // Clean up existing map and markers
+        markers.current.forEach(marker => marker.setMap(null));
+        markers.current = [];
+        
+        const newMap = new google.maps.Map(mapRef.current, mapOptions);
+        setMap(newMap);
+        setIsReady(true);
+        
+        // Add marker for single property
+        if (isSingleProperty && location.lat !== 0 && location.lng !== 0) {
+          const marker = new google.maps.Marker({
+            position: location,
+            map: newMap,
+            animation: google.maps.Animation.DROP,
+          });
+          
+          markers.current.push(marker);
+        }
+      } catch (err) {
+        console.error('Error retrying map initialization:', err);
+        setError('Failed to initialize Google Maps');
+      }
+    }
+  }, [location, isSingleProperty]);
 
   return { 
     mapRef, 
+    map,
     isReady, 
     error, 
     retryMapInitialization, 
-    addNearbyPlaces 
+    addNearbyPlaces,
+    nearbyPlaces
   };
 };
 

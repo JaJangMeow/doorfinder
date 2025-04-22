@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +25,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
   address
 }) => {
   const { toast } = useToast();
-  const { loaded: googleMapsLoaded } = useGoogleMapsScript();
+  const { loaded: googleMapsLoaded, error: scriptError } = useGoogleMapsScript();
   const [activeTab, setActiveTab] = useState<string>('map');
   const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
   
@@ -37,6 +37,17 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     Number(latitude) !== 0 &&
     Number(longitude) !== 0;
 
+  useEffect(() => {
+    if (scriptError) {
+      toast({
+        title: "Maps API Error",
+        description: "Could not load Google Maps. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  }, [scriptError, toast]);
+
+  // Only proceed with map initialization if coordinates are valid and Google Maps is loaded
   const { 
     mapRef, 
     isReady, 
@@ -48,6 +59,17 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
     longitude: hasValidCoordinates ? Number(longitude) : 0, 
     googleMapsLoaded
   });
+
+  useEffect(() => {
+    console.log("Map state:", { 
+      hasValidCoordinates, 
+      googleMapsLoaded, 
+      isReady, 
+      mapError,
+      latitude,
+      longitude
+    });
+  }, [hasValidCoordinates, googleMapsLoaded, isReady, mapError, latitude, longitude]);
 
   const handleOpenGoogleMaps = () => {
     const mapsUrl = hasValidCoordinates
@@ -67,6 +89,7 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
   const handleShowNearbyPlaces = () => {
     setShowNearbyPlaces(true);
     addNearbyPlaces();
+    
     toast({
       title: "Showing nearby places",
       description: "Displaying restaurants, schools, and transit stations near this property",
@@ -100,8 +123,8 @@ const PropertyLocation: React.FC<PropertyLocationProps> = ({
             <TabsContent value="map" className="m-0">
               <MapTabContent 
                 mapRef={mapRef}
-                isReady={isReady}
-                error={!!mapError}
+                isReady={isReady && googleMapsLoaded}
+                error={!!mapError || scriptError}
                 retryMapInitialization={retryMapInitialization}
                 showNearbyPlaces={showNearbyPlaces}
                 onShowNearbyPlaces={handleShowNearbyPlaces}

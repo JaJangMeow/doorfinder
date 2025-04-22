@@ -1,307 +1,108 @@
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { MediaItem } from '../types';
 
-interface UseGalleryProps {
-  media: MediaItem[];
-}
-
-export const useGallery = ({ media }: UseGalleryProps) => {
+export const useGallery = (media: MediaItem[] = []) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
-  const [preloadedImages, setPreloadedImages] = useState<Record<number, boolean>>({});
-  const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
-  const galleryRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Filter only valid media items
-  const validMedia = media.filter(item => 
-    item && 
-    item.url && 
-    typeof item.url === 'string' && 
-    item.url.trim() !== '' &&
-    (item.type === 'image' || item.type === 'video')
-  );
-
-  const preloadImages = useCallback(() => {
-    if (validMedia.length === 0) return;
+  // Get current media item
+  const currentItem = media[currentIndex] || { type: 'image', url: '' };
+  
+  // Check if there are any items
+  const hasItems = media.length > 0;
+  
+  // Get type of current item
+  const isVideo = currentItem?.type === 'video';
+  
+  // Calculate thumbnail gallery dimensions
+  const calculateResponsiveDimensions = useCallback(() => {
+    // Base height for thumbnails
+    const baseHeight = 80; 
     
-    const preloadState: Record<number, boolean> = {};
-    const loadingState: Record<number, boolean> = {};
+    // Determine number of items to show based on screen width
+    const itemsToShow = typeof window !== 'undefined' ? 
+      (window.innerWidth < 640 ? 3 : window.innerWidth < 1024 ? 4 : 5) : 5;
     
-    validMedia.forEach((item, index) => {
-      if (item.type === 'image') {
-        preloadState[index] = false;
-        loadingState[index] = true;
-      }
-    });
-    
-    setPreloadedImages(preloadState);
-    setImageLoading(loadingState);
-    
-    // Prioritize loading current image
-    if (validMedia[currentIndex]?.type === 'image') {
-      const img = new Image();
-      img.onload = () => {
-        setPreloadedImages(prev => ({...prev, [currentIndex]: true}));
-        setImageLoading(prev => ({...prev, [currentIndex]: false}));
-      };
-      img.onerror = () => {
-        console.error(`Failed to preload primary image at index ${currentIndex}`);
-        setImageLoading(prev => ({...prev, [currentIndex]: false}));
-      };
-      img.src = validMedia[currentIndex].url;
-    }
-  }, [validMedia, currentIndex]);
-
-  const preloadAdjacentImages = useCallback((index: number) => {
-    if (validMedia.length <= 1) return;
-    
-    const queue: number[] = [];
-    
-    const nextIndex = index === validMedia.length - 1 ? 0 : index + 1;
-    const prevIndex = index === 0 ? validMedia.length - 1 : index - 1;
-    
-    if (validMedia[nextIndex]?.type === 'image' && !preloadedImages[nextIndex]) {
-      queue.push(nextIndex);
-    }
-    
-    if (validMedia[prevIndex]?.type === 'image' && !preloadedImages[prevIndex]) {
-      queue.push(prevIndex);
-    }
-    
-    validMedia.forEach((idx) => {
-      if (idx !== index && idx !== nextIndex && idx !== prevIndex && 
-          validMedia[Number(idx)]?.type === 'image' && !preloadedImages[Number(idx)]) {
-        queue.push(Number(idx));
-      }
-    });
-    
-    let i = 0;
-    const processQueue = () => {
-      if (i < queue.length) {
-        const idx = queue[i];
-        const img = new Image();
-        img.onload = () => {
-          setPreloadedImages(prev => ({...prev, [idx]: true}));
-          setImageLoading(prev => ({...prev, [idx]: false}));
-          i++;
-          setTimeout(processQueue, 100);
-        };
-        img.onerror = () => {
-          console.error(`Failed to preload image at index ${idx}`);
-          setImageLoading(prev => ({...prev, [idx]: false}));
-          i++;
-          setTimeout(processQueue, 100);
-        };
-        img.src = validMedia[idx].url;
-      }
+    return { 
+      height: baseHeight,
+      itemsToShow
     };
-    
-    processQueue();
-  }, [validMedia, preloadedImages]);
-
-  const pauseCurrentVideo = useCallback(() => {
-    if (validMedia[currentIndex]?.type === 'video') {
-      const video = videoRefs.current[currentIndex];
-      if (video) {
-        video.pause();
-        setIsPlaying(false);
-      }
-    }
-  }, [currentIndex, validMedia]);
-
-  const handlePrevious = useCallback(() => {
-    pauseCurrentVideo();
-    setCurrentIndex(prevIndex => {
-      const newIndex = prevIndex === 0 ? validMedia.length - 1 : prevIndex - 1;
-      return newIndex;
-    });
-  }, [validMedia.length, pauseCurrentVideo]);
-
-  const handleNext = useCallback(() => {
-    pauseCurrentVideo();
-    setCurrentIndex(prevIndex => {
-      const newIndex = prevIndex === validMedia.length - 1 ? 0 : prevIndex + 1;
-      return newIndex;
-    });
-  }, [validMedia.length, pauseCurrentVideo]);
-
-  const togglePlay = useCallback(() => {
-    const video = videoRefs.current[currentIndex];
-    if (video) {
-      if (isPlaying) {
-        video.pause();
-      } else {
-        video.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  }, [currentIndex, isPlaying, videoRefs]);
-
-  const enterFullscreen = useCallback(() => {
-    if (!galleryRef.current) return;
-    
-    setFullscreen(true);
-    
-    // In fullscreen mode, attempt to use browser's fullscreen API
-    if (galleryRef.current.requestFullscreen) {
-      galleryRef.current.requestFullscreen().catch(err => {
-        console.error('Error attempting to enable fullscreen:', err);
-      });
-    }
   }, []);
-
-  const exitFullscreen = useCallback(() => {
-    setFullscreen(false);
-    
-    // Exit browser's fullscreen if active
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(err => {
-        console.error('Error attempting to exit fullscreen:', err);
-      });
+  
+  const { height, itemsToShow } = calculateResponsiveDimensions();
+  
+  // Methods to navigate between items
+  const goToNext = useCallback(() => {
+    if (media.length <= 1) return;
+    setCurrentIndex(current => (current + 1) % media.length);
+  }, [media.length]);
+  
+  const goToPrevious = useCallback(() => {
+    if (media.length <= 1) return;
+    setCurrentIndex(current => (current - 1 + media.length) % media.length);
+  }, [media.length]);
+  
+  const goToIndex = useCallback((index: number) => {
+    if (index >= 0 && index < media.length) {
+      setCurrentIndex(index);
     }
-  }, []);
-
+  }, [media.length]);
+  
+  // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
-    if (fullscreen) {
-      exitFullscreen();
-    } else {
-      enterFullscreen();
+    setIsFullscreen(current => !current);
+  }, []);
+  
+  // Calculate visible thumbnails (for scrolling thumbnail gallery)
+  const getVisibleThumbnails = useCallback(() => {
+    if (media.length <= itemsToShow) {
+      // If we have fewer items than can be shown, return all
+      return { start: 0, end: media.length - 1 };
     }
-  }, [fullscreen, enterFullscreen, exitFullscreen]);
-
-  const handleMediaError = useCallback((type: 'image' | 'video', index: number) => {
-    console.error(`Error loading ${type} at index ${index}`);
     
-    if (type === 'image') {
-      setImageLoading(prev => ({...prev, [index]: false}));
-      
-      if (index === currentIndex) {
-        setMediaError(`Error loading ${type}. Please try again.`);
-      }
-    } else {
-      setMediaError(`Error loading ${type}. Please try again.`);
+    // Calculate center of the window
+    const halfWindow = Math.floor(itemsToShow / 2);
+    
+    // If we're near the start
+    if (currentIndex <= halfWindow) {
+      return { start: 0, end: itemsToShow - 1 };
     }
-  }, [currentIndex]);
-
-  const handleImageLoad = useCallback((index: number) => {
-    setImageLoading(prev => ({...prev, [index]: false}));
-    setPreloadedImages(prev => ({...prev, [index]: true}));
     
-    if (index === currentIndex && mediaError) {
-      setMediaError(null);
+    // If we're near the end
+    if (currentIndex >= media.length - halfWindow - 1) {
+      return { start: media.length - itemsToShow, end: media.length - 1 };
     }
-  }, [currentIndex, mediaError]);
-
-  const handleThumbnailClick = useCallback((index: number) => {
-    pauseCurrentVideo();
-    setCurrentIndex(index);
-  }, [pauseCurrentVideo]);
-
-  // Initialize loading states and preload images only on initial render or when media changes
-  useEffect(() => {
-    const loadingState: Record<number, boolean> = {};
-    validMedia.forEach((item, index) => {
-      if (item.type === 'image') {
-        loadingState[index] = true;
-      }
-    });
     
-    setImageLoading(loadingState);
-    preloadImages();
-    
-    setMediaError(null);
-    setCurrentIndex(0);
-    setIsPlaying(false);
-  }, [media]); // Depend on media only, not validMedia
-
-  // Handle fullscreen change events
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isDocFullscreen = document.fullscreenElement !== null;
-      
-      // Only update state if it doesn't match the current fullscreen state
-      if (fullscreen !== isDocFullscreen) {
-        setFullscreen(isDocFullscreen);
-      }
-      
-      if (!isDocFullscreen && validMedia[currentIndex]?.type === 'video') {
-        const video = videoRefs.current[currentIndex];
-        if (video && !video.paused) {
-          video.pause();
-          setIsPlaying(false);
-        }
-      }
+    // If we're in the middle
+    return { 
+      start: currentIndex - halfWindow, 
+      end: currentIndex + halfWindow + (itemsToShow % 2 === 0 ? 0 : 1) 
     };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, [currentIndex, fullscreen, validMedia]);
-
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        handlePrevious();
-      } else if (e.key === 'ArrowRight') {
-        handleNext();
-      } else if (e.key === ' ' || e.key === 'Spacebar') {
-        if (validMedia.length > 0 && validMedia[currentIndex]?.type === 'video') {
-          e.preventDefault();
-          togglePlay();
-        }
-      } else if (e.key === 'Escape' && fullscreen) {
-        exitFullscreen();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentIndex, validMedia, handleNext, handlePrevious, togglePlay, exitFullscreen, fullscreen]);
-
-  // Ensure current index is valid
-  useEffect(() => {
-    if (validMedia.length > 0 && currentIndex >= validMedia.length) {
-      setCurrentIndex(0);
-    }
-  }, [validMedia, currentIndex]);
-
-  // Preload adjacent images when in fullscreen or when current index changes
-  useEffect(() => {
-    if (fullscreen || currentIndex !== undefined) {
-      preloadAdjacentImages(currentIndex);
-    }
-  }, [fullscreen, currentIndex, preloadAdjacentImages]);
-
+  }, [currentIndex, media.length, itemsToShow]);
+  
+  // Check if an index is the current index
+  const isCurrentIndex = (index: number) => index === currentIndex;
+  
+  // Check if we can navigate
+  const canGoNext = media.length > 1 && currentIndex < media.length - 1;
+  const canGoPrevious = media.length > 1 && currentIndex > 0;
+  
   return {
-    validMedia,
+    currentItem,
     currentIndex,
-    isPlaying,
-    fullscreen,
-    mediaError,
-    imageLoading,
-    preloadedImages,
-    videoRefs,
-    galleryRef,
-    handlePrevious,
-    handleNext,
-    togglePlay,
-    enterFullscreen,
-    exitFullscreen,
+    hasItems,
+    isVideo,
+    isFullscreen,
+    height,
+    itemsToShow,
+    goToNext,
+    goToPrevious,
+    goToIndex,
     toggleFullscreen,
-    handleMediaError,
-    handleImageLoad,
-    handleThumbnailClick,
-    setIsPlaying,
-    setMediaError
+    getVisibleThumbnails,
+    isCurrentIndex,
+    canGoNext,
+    canGoPrevious
   };
 };
