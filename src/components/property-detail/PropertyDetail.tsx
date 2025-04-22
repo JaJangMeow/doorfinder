@@ -22,6 +22,22 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
     setupSupabaseStorage();
   }, []);
 
+  // --------- FORCE DARK MODE ON MOBILE ---------
+  useEffect(() => {
+    const isMobile =
+      typeof window !== "undefined" &&
+      ((/iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(window.navigator.userAgent)) ||
+        window.innerWidth <= 800);
+    if (isMobile) {
+      document.documentElement.classList.add('dark');
+    }
+    // Optionally, clean up if necessary
+    // return () => {
+    //   document.documentElement.classList.remove('dark');
+    // };
+  }, []);
+  // ---------------------------------------------
+
   const createFallbackMedia = (): MediaItem[] => {
     return [{
       url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2673&q=80',
@@ -60,7 +76,7 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
   }, [property.id]);
 
   const handleContactClick = () => {
-    window.location.href = `mailto:${property.contactEmail}?subject=Inquiry about ${property.title}`;
+    // now not used, we show copy phone button
   };
 
   const handleSaveProperty = async () => {
@@ -123,30 +139,28 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
   return (
     <div className="container mx-auto px-4 md:px-6 py-6">
       <PropertyBreadcrumb propertyTitle={property.title} />
-      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8">
-          <PropertyMediaGallery 
-            media={mediaItems} 
-            title={property.title}
-            isSaved={isSaved}
-            isLoading={isLoading}
-            onSaveToggle={handleSaveProperty}
-          />
-          
-          <div className="mt-6">
-            <PropertyHeader 
+          {/* HEIGHT BUMPED here: */}
+          <div className="mb-6">
+            <PropertyMediaGallery 
+              media={mediaItems} 
               title={property.title}
-              address={property.address}
-              price={property.price}
-              availableFrom={property.availableFrom}
-              depositAmount={property.depositAmount}
               isSaved={isSaved}
               isLoading={isLoading}
               onSaveToggle={handleSaveProperty}
             />
           </div>
-          
+          <PropertyHeader 
+            title={property.title}
+            address={property.address}
+            price={property.price}
+            availableFrom={property.availableFrom}
+            depositAmount={property.depositAmount}
+            isSaved={isSaved}
+            isLoading={isLoading}
+            onSaveToggle={handleSaveProperty}
+          />
           <div className="mt-6">
             <PropertyTabs 
               property={property}
@@ -154,7 +168,6 @@ export const PropertyDetail: React.FC<{ property: PropertyDetailData }> = ({ pro
             />
           </div>
         </div>
-        
         <div className="lg:col-span-4">
           <PropertySidebar
             property={property}

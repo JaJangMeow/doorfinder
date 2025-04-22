@@ -24,6 +24,13 @@ const PropertySidebar: React.FC<PropertySidebarProps> = ({
             <span className="text-muted-foreground">Price</span>
             <span className="font-medium">₹{property.price}/month</span>
           </div>
+          {/* Deposit */}
+          {property.depositAmount && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Deposit</span>
+              <span className="font-medium">₹{property.depositAmount.toLocaleString()}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-muted-foreground">Bedrooms</span>
             <span>{property.bedrooms}</span>

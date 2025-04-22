@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaItem as MediaItemType } from './types';
 import { 
@@ -55,6 +54,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   }
 
   if (!validMedia || validMedia.length === 0) {
+    // Only show EmptyGalleryState if there are NO images or media
     return <EmptyGalleryState />;
   }
 
@@ -84,7 +84,7 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   return (
     <div ref={galleryRef} className="space-y-4">
       <div className="relative rounded-xl overflow-hidden bg-muted">
-        <div className="aspect-[16/9] relative">
+        <div className="aspect-[16/9] relative min-h-[300px] md:min-h-[400px]">
           <MediaItem
             item={currentMedia}
             title={title}
@@ -125,7 +125,6 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           </div>
         </div>
       </div>
-
       {validMedia.length > 1 && (
         <ThumbnailGallery
           media={validMedia}

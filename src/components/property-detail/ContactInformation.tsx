@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { User, Mail, Phone } from 'lucide-react';
+import { User, Mail, Phone, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContactInformationProps {
   contactName: string;
@@ -11,13 +12,56 @@ interface ContactInformationProps {
   compact?: boolean;
 }
 
+/**
+ * Copy text to clipboard and show a toast.
+ * Returns a function to call on button click.
+ */
+const useCopyToClipboard = () => {
+  const { toast } = useToast();
+
+  return (text: string, label = "Copied!") => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast({
+          title: label,
+          description: "Phone number copied to clipboard!",
+        });
+      });
+    } else {
+      // fallback
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        toast({
+          title: label,
+          description: "Phone number copied to clipboard!",
+        });
+      } catch (err) {
+        toast({
+          title: "Failed",
+          description: "Could not copy the phone number",
+          variant: "destructive",
+        });
+      }
+      document.body.removeChild(textarea);
+    }
+  };
+};
+
 const ContactInformation: React.FC<ContactInformationProps> = ({
   contactName,
   contactEmail,
   contactPhone,
-  onContactClick,
   compact = false
 }) => {
+  const copyToClipboard = useCopyToClipboard();
+
   // Compact mode for sidebar
   if (compact) {
     return (
@@ -33,12 +77,12 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
             <span className="truncate">{contactPhone}</span>
           </div>
         </div>
-        <Button 
-          className="w-full mt-2" 
-          onClick={onContactClick}
+        <Button
+          className="w-full mt-2"
           size="sm"
+          onClick={() => copyToClipboard(contactPhone, "Number copied!")}
         >
-          Email Owner
+          <Copy className="h-4 w-4 mr-2" /> Copy Phone Number
         </Button>
       </div>
     );
@@ -56,7 +100,6 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
             <p>{contactName}</p>
           </div>
         </div>
-        
         <div className="flex items-center">
           <Mail className="h-5 w-5 mr-3 text-primary" />
           <div>
@@ -64,7 +107,6 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
             <p>{contactEmail}</p>
           </div>
         </div>
-        
         <div className="flex items-center">
           <Phone className="h-5 w-5 mr-3 text-primary" />
           <div>
@@ -73,12 +115,11 @@ const ContactInformation: React.FC<ContactInformationProps> = ({
           </div>
         </div>
       </div>
-      
-      <Button 
-        className="w-full mt-6" 
-        onClick={onContactClick}
+      <Button
+        className="w-full mt-6"
+        onClick={() => copyToClipboard(contactPhone, "Number copied!")}
       >
-        Contact Owner
+        <Copy className="h-4 w-4 mr-2" /> Copy Phone Number
       </Button>
     </div>
   );
