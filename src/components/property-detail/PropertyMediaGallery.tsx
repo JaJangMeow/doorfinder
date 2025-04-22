@@ -85,8 +85,8 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
   return (
     <div ref={galleryRef} className="space-y-4">
       <div className="relative rounded-xl overflow-hidden bg-muted">
-        {/* Height increased: */}
-        <div className="aspect-[16/9] relative min-h-[300px] md:min-h-[400px]">
+        {/* Height increased for more vertical viewing area on mobile */}
+        <div className="aspect-[9/16] sm:aspect-[16/9] relative min-h-[450px] md:min-h-[500px]">
           <MediaItem
             item={currentMedia}
             title={title}
@@ -107,6 +107,20 @@ const PropertyMediaGallery: React.FC<PropertyMediaGalleryProps> = ({
           {mediaError && (
             <ErrorMessage message={mediaError} onClose={() => setMediaError(null)} />
           )}
+
+          {/* Enhanced fullscreen button that's more prominent */}
+          <button
+            onClick={enterFullscreen}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-6 transition-all duration-200 flex items-center justify-center z-10"
+            aria-label="View fullscreen"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
 
           <GalleryControls
             isFullscreen={false}

@@ -85,6 +85,7 @@ const GalleryControls: React.FC<GalleryControlsProps> = ({
             className="bg-white/80 backdrop-blur-sm hover:bg-white"
           >
             <Maximize size={20} />
+            <span className="sr-only">Fullscreen</span>
           </Button>
         </div>
       )}
